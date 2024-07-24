@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\StockManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +24,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
+
 Route::prefix('/admin')->middleware('auth')->group(function () {
+    
+    // Route::get('/stock', [StockManagementController::class, 'index'])->name('stock.index');
+
     // Route::view('/', 'welcome')->name('home');
     // Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     // Route::post('/cart', [CartController::class, 'store'])->name('cart.store');

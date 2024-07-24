@@ -48,7 +48,7 @@ class PostOrder extends Page implements HasForms
         
         $products = Product::get();
 
-        $customers = Customer::pluck('first_name', 'id')->toArray(); //change to customer.name instead
+        $customers = Customer::pluck('name', 'id')->toArray(); //change to customer.name instead
 
         $options = [];
 

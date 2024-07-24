@@ -16,6 +16,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\Fieldset;
@@ -32,13 +34,16 @@ use Filament\Tables\Columns\Layout\Panel;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Summarizers\Range;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource
 {
@@ -222,7 +227,8 @@ class OrderResource extends Resource
 
         return $table
             // ->groupsOnly()
-            // ->defaultGroup('id')
+            // ->defaultGroup('created_at')
+
             // ->paginated([10, 25, 50, 100, 'all'])
             ->groups([
                 'channel.channel',
@@ -231,12 +237,17 @@ class OrderResource extends Resource
                     ->collapsible()
                     ->label('Daily Summary')
                     ->date()
+
+                    ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderBy('created_at', $direction))
+                // ->sortable(descending)
             ])->groupRecordsTriggerAction(
                 fn (Action $action) => $action
                     ->button()
                     ->label('Group records'),
             )->groupingSettingsInDropdownOnDesktop()
-            ->poll('30s')
+            // ->poll('30s')
+            ->deferLoading()
+            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('Order ID')
@@ -264,47 +275,41 @@ class OrderResource extends Resource
                     ->sum('items', 'price')
                     ->money('NGN')
                     ->searchable()
-                    ->label('Amount')
+                    ->label('Price')
                     ->summarize([
                         Sum::make()->money('NGN')->label('Total'),
                         // Range::make()
                     ])
                     ->sortable(),
-                // Tables\Columns\TextColumn::make('payments.amount')
-                //     ->money('NGN')
-                //     ->searchable()
-                //     ->label('Amount')
-                //     ->summarize([
-                //         Sum::make()->money('NGN')->label('Total'),
-                //         // Range::make()
-                //     ])
-                //     ->sortable(),
                 Tables\Columns\TextColumn::make('payments_sum_paid')
                     ->money('NGN')
                     ->sum('payments', 'paid')
                     ->searchable()
-                    ->label('Paid amount')
+                    ->label('Paid')
+                    ->default(0)
                     ->summarize([
                         Sum::make()->money('NGN')->label('Total'),
                         // Range::make()
                     ])
                     ->sortable(),
-                Tables\Columns\SelectColumn::make('payment_method_id')
+                Tables\Columns\TextColumn::make('payments.payment_method.name')
                     ->searchable()
+                    ->wrap()
+                    ->words(3)
+                    ->size(TextColumnSize::ExtraSmall)
+                    ->placeholder('unpaid')
                     // ->relationship('payments', 'payment_method_id')
                     ->label('Payment type')
-                    // ->multiple()
-                    ->options(function (): array {
-                        return PaymentMethod::all()->pluck('name', 'id')->all();
-                    }),
+                // ->multiple()
+                ,
                 Tables\Columns\TextColumn::make('order')
                     ->label('Payment')
                     ->badge()
                     ->default('unknown')
-                    ->formatStateUsing(function ($record){
-                        $sum_paid = Payment::where('order_id',$record->id)->sum('paid');
-                        $sum_price = OrderItem::where('order_id',$record->id)->sum('price');
-                        
+                    ->formatStateUsing(function ($record) {
+                        $sum_paid = Payment::where('order_id', $record->id)->sum('paid');
+                        $sum_price = OrderItem::where('order_id', $record->id)->sum('price');
+
                         // dd($items);
 
                         $paymentDifference = $sum_price - $sum_paid;
@@ -359,6 +364,34 @@ class OrderResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                    // Panel::make([
+                        // Stack::make([               
+                            Tables\Columns\TextColumn::make('Orders')
+                            // ->state(fn (Order $record): string => $record->items[0]->quantity)
+                            ->state(function (Model $record): array {
+                                $itemNames = [];
+    
+                                // Loop through each item associated with the record
+                                foreach ($record->items as $item) {
+                                    // Get the product name for the current item
+                                    $productName = $item->product->name;
+    
+                                    // Get the quantity for the current item
+                                    $itemQuantity = $item->quantity;
+    
+                                    // Concatenate the product name and quantity
+                                    $itemNames[] = "$itemQuantity"."x "."$productName";
+                                }
+    
+                                // Join the array of item names into a single string separated by commas
+                                // return implode(', ', $itemNames);
+                                return $itemNames;
+                            })
+                            ->listWithLineBreaks(),
+                        // ]),
+                        
+                    // ])->collapsible(),
             ])
             ->searchPlaceholder('ID, Amount, Customer etc')
             ->defaultSort('id', 'desc')
@@ -366,19 +399,66 @@ class OrderResource extends Resource
             ->filtersFormColumns(2)
             ->filters([
                 Filter::make('POS')
-                    ->query(fn (Builder $query) => $query->orWhereHas('pay_method', function ($query) {
-                        $query->where('name', 'like', '%POS%');
+                    ->label('ATM Card/POS')
+                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                        $query->where('payment_method_id', '=', 3);
                     })),
                 Filter::make('Cash')
-                    ->query(fn (Builder $query) => $query->orWhereHas('pay_method', function ($query) {
-                        $query->where('name', 'like', '%Cash%');
+                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                        $query->where('payment_method_id', '=', 1);
                     })),
                 Filter::make('Transfer')
-                    ->query(fn (Builder $query) => $query->orWhereHas('pay_method', function ($query) {
-                        $query->where('name', 'like', '%Transfer%');
+                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                        $query->where('payment_method_id', '=', 2);
                     })),
 
+                SelectFilter::make('id')
+                    ->multiple()
+                    ->form([
+                        Select::make('pay_status')
+                            ->options([
+                                'paid' => 'Paid',
+                                'unpaid' => 'Unpaid',
+                                'partial' => 'Partial',
+                            ]),
+                    ])
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['pay_status'] == 'partial' ?? null) {
+                            $indicators[] = Indicator::make('Partial payment')
+                                ->removeField('partial');
+                        }
+
+                        if ($data['pay_status'] == 'unpaid' ?? null) {
+                            $indicators[] = Indicator::make('No payment')
+                                ->removeField('unpaid');
+                        }
+
+                        if ($data['pay_status'] == 'paid' ?? null) {
+                            $indicators[] = Indicator::make('Full payment')
+                                ->removeField('paid');
+                        }
+
+                        return $indicators;
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['pay_status'] == 'partial',
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
+                            )
+                            ->when(
+                                $data['pay_status'] == 'unpaid',
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
+                            )->when(
+                                $data['pay_status'] == 'paid',
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
+                            );
+                    }),
+
                 SelectFilter::make('status')
+                    ->multiple()
                     ->options([
                         'pending' => 'Pending',
                         'failed' => 'Cancelled',
@@ -386,22 +466,32 @@ class OrderResource extends Resource
                     ]),
 
                 SelectFilter::make('customer_id')
+                ->multiple()
                     ->label('Customer')
                     ->options(function (): array {
                         return Customer::all()->pluck('name', 'id')->all();
                     }),
 
                 SelectFilter::make('channel_id')
+                    ->multiple()
                     ->label('Channel')
+                    ->multiple()
                     ->options(function (): array {
                         return OrderChannel::all()->pluck('channel', 'id')->all();
                     }),
 
                 SelectFilter::make('items.product.product_category.name')
                     ->label('Category')
+                    ->multiple()
                     ->options(function (): array {
                         return ProductCategory::all()->pluck('name', 'id')->all();
                     }),
+                // SelectFilter::make('user_id')
+                //     ->label('Created by')
+                //     ->multiple()
+                //     ->options(function (): array {
+                //         return User::all()->pluck('first_name', 'id')->all();
+                //     }),
                 Filter::make('created_at')
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];

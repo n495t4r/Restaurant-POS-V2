@@ -13,13 +13,9 @@ return new class extends Migration
     {
         Schema::create('stock_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('supply')->nullable();
-            $table->date('date');
-            $table->integer('stock_level')->nullable(); // Stock level at the end of the day
+            $table->json('closing_stock');
+            $table->date('closing_date')->unique();
             $table->timestamps();
-        
-            $table->unique(['product_id', 'date']); // Ensure one entry per product per day
         });
         
     }

@@ -10,13 +10,18 @@ class Expense extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'title', 'amount', 'date', 'description','user_id'
+        'category_id', 'title', 'amount', 'date', 'description','user_id', 'payment_method_id'
      ];
 
 
     protected $casts = [
         'date' => 'date', // Ensures the 'date' attribute is cast to a date type
     ];
+
+    public function payment_method()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
 
     public function user()
     {

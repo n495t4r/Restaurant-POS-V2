@@ -53,4 +53,43 @@ class Product extends Model
             return null; // Or handle it as per your requirement
         }
     }
+
+      /**
+     * Increase the product quantity.
+     *
+     * @param int $id
+     * @param int $quantity
+     * @return bool
+     */
+    public static function increaseQuantity(int $id, int $quantity): bool
+    {
+        $product = self::find($id);
+
+        if ($product) {
+            $product->quantity += $quantity;
+            return $product->save();
+        }
+
+        return false;
+    }
+
+    /**
+     * Decrease the product quantity.
+     *
+     * @param int $id
+     * @param int $quantity
+     * @return bool
+     */
+    public static function decreaseQuantity(int $id, int $quantity): bool
+    {
+        $product = self::find($id);
+
+        if ($product && $product->quantity >= $quantity) {
+            $product->quantity -= $quantity;
+            return $product->save();
+        }
+
+        return false;
+    }
+
 }

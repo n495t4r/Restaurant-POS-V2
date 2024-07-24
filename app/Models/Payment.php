@@ -10,7 +10,6 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'amount',
         'order_id',
         'user_id',
         'customer_id',
@@ -39,5 +38,10 @@ class Payment extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class,'customer_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

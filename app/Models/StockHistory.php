@@ -2,20 +2,35 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 
 class StockHistory extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'product_id', 'date', 'supply', 'stock_level'
+        'closing_stock',
+        'closing_date',
     ];
 
-    public function product()
+    protected $casts = [
+        'closing_stock' => 'array',
+        'closing_date' => 'date',
+    ];
+
+    public function products()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsToMany(Product::class, 'closing_stock', 'product_id', 'closing_qty');
+    }
+
+    public static function getPreviousDayRecords()
+    {
+        // $yesterday = Carbon::yesterday()->format('Y-m-d');
+        $yesterday = Carbon::yesterday()->toDateString();
+        return self::whereDate('closing_date', '=', $yesterday)->first();
+
+        // return self::whereDate('closing_date', $yesterday)->get();
     }
 
 }

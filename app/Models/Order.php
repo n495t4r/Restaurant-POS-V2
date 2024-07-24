@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -26,7 +27,7 @@ class Order extends Model
     //     ];
     // }
 
-    public function items() : HasMany
+    public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
@@ -35,7 +36,7 @@ class Order extends Model
     {
         return $this->hasMany(Pack::class);
     }
-    
+
     // public function payments()
     // {
     //     return $this->belongsTo(Payment::class);
@@ -53,7 +54,7 @@ class Order extends Model
 
     public function pay_method()
     {
-        return $this->belongsTo(PaymentMethod::class,'payment_method_id');
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 
     public function channel()
@@ -68,10 +69,82 @@ class Order extends Model
 
     public function getCustomerName()
     {
-        if($this->customer) {
+        if ($this->customer) {
             return $this->customer->first_name . ' ' . $this->customer->last_name;
         }
         return 'Walk-in Customer';
+    }
+
+    public static function partial_payment()
+    {
+        $itemTotals = DB::table('order_items')
+            ->select('order_id', DB::raw('SUM(price) as total_price'))
+            ->groupBy('order_id');
+
+        $paymentTotals = DB::table('payments')
+            ->select('order_id', DB::raw('SUM(paid) as total_paid'))
+            ->groupBy('order_id');
+
+        $ids = Order::select('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->joinSub($itemTotals, 'item_totals', function ($join) {
+                $join->on('orders.id', '=', 'item_totals.order_id');
+            })
+            ->leftJoinSub($paymentTotals, 'payment_totals', function ($join) {
+                $join->on('orders.id', '=', 'payment_totals.order_id');
+            })
+            ->groupBy('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->havingRaw('(total_price - total_paid) < total_price and (total_price - total_paid) > 0')
+            ->pluck('orders.id', 'id');
+
+        return $ids;
+    }
+
+    public static function full_payment()
+    {
+        $itemTotals = DB::table('order_items')
+            ->select('order_id', DB::raw('SUM(price) as total_price'))
+            ->groupBy('order_id');
+
+        $paymentTotals = DB::table('payments')
+            ->select('order_id', DB::raw('SUM(paid) as total_paid'))
+            ->groupBy('order_id');
+
+        $ids = Order::select('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->joinSub($itemTotals, 'item_totals', function ($join) {
+                $join->on('orders.id', '=', 'item_totals.order_id');
+            })
+            ->leftJoinSub($paymentTotals, 'payment_totals', function ($join) {
+                $join->on('orders.id', '=', 'payment_totals.order_id');
+            })
+            ->groupBy('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->havingRaw('(total_price - total_paid) <= 0')
+            ->pluck('orders.id', 'id');
+
+        return $ids;
+    }
+
+    public static function no_payment()
+    {
+        $itemTotals = DB::table('order_items')
+            ->select('order_id', DB::raw('SUM(price) as total_price'))
+            ->groupBy('order_id');
+
+        $paymentTotals = DB::table('payments')
+            ->select('order_id', DB::raw('SUM(paid) as total_paid'))
+            ->groupBy('order_id');
+
+        $ids = Order::select('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->joinSub($itemTotals, 'item_totals', function ($join) {
+                $join->on('orders.id', '=', 'item_totals.order_id');
+            })
+            ->leftJoinSub($paymentTotals, 'payment_totals', function ($join) {
+                $join->on('orders.id', '=', 'payment_totals.order_id');
+            })
+            ->groupBy('orders.id', 'item_totals.total_price', 'payment_totals.total_paid')
+            ->havingRaw('(total_paid = 0 or total_paid is null) and total_price > 0')
+            ->pluck('orders.id', 'id');
+
+        return $ids;
     }
 
     // public function total()
@@ -95,7 +168,7 @@ class Order extends Model
 
     public function payment_methods()
     {
-        return $this->payments->map(function ($i){
+        return $this->payments->map(function ($i) {
             return json_decode($i->payment_methods);
         });
     }

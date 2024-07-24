@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id'); 
             $table->string('title');
             $table->decimal('amount', 10, 2);
+            $table->foreignId('payment_method_id')->nullable();
             $table->date('date');
             $table->text('description')->nullable();
             $table->timestamps();
@@ -24,6 +25,8 @@ return new class extends Migration
             // Define foreign key constraint
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('expense_categories')->onDelete('cascade');
+            $table->foreign('payment_method_id')->references('id')->on('payment_methods')->onDelete('cascade');
+
         });
     }
 

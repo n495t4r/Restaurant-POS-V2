@@ -36,6 +36,9 @@ class ExpenseResource extends Resource
                 Forms\Components\TextInput::make('amount')
                     ->required()
                     ->numeric(),
+                Forms\Components\Select::make('payment_method_id')
+                    ->relationship('payment_method', 'name')
+                    ->required(),
                 Forms\Components\DatePicker::make('date')
                     ->required(),
                 Forms\Components\Textarea::make('description')
