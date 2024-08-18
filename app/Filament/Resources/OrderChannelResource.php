@@ -25,12 +25,17 @@ class OrderChannelResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            
+
             ->schema([
                 Forms\Components\TextInput::make('channel')
-                ->columnSpanFull()
+                    ->columnSpanFull()
                     ->required()
-                    ->maxLength(255)
+                    ->maxLength(255),
+                Forms\Components\Toggle::make('is_active')
+                    ->onColor('success')
+                    ->offColor('danger')
+                    // ->inline()
+                    ->required(),
             ]);
     }
 
@@ -43,6 +48,10 @@ class OrderChannelResource extends Resource
                 // Tables\Columns\TextColumn::make('user_id')
                 //     ->numeric()
                 //     ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->sortable()
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

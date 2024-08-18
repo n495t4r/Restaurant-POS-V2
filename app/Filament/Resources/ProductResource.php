@@ -43,6 +43,8 @@ class ProductResource extends Resource
                     ->required()
                     ->numeric(),
                 Forms\Components\Toggle::make('status')
+                    ->onColor('success')
+                    ->offColor('danger')
                     ->required(),
             ]);
     }
@@ -57,8 +59,8 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('image')
-                ->defaultImageUrl(url('product.png'))
-                ->disk('public')
+                    ->defaultImageUrl(url('product.png'))
+                    ->disk('public')
                 // ->visibility('private')
                 ,
                 Tables\Columns\TextColumn::make('name')

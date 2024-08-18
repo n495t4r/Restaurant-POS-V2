@@ -91,7 +91,7 @@ class StockHistoryResource extends Resource
                     // ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('supply')
-                    ->formatStateUsing(function ($record){
+                    ->formatStateUsing(function ($record) {
                         // dd($record->id);
                         $supply = NewStock::where('product_id', $record->id)->sum('quantity');
                         return $supply;

@@ -21,6 +21,10 @@ class Product extends Model
         'counter'
     ];
 
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
     public function stockHistories()
     {
         return $this->hasMany(StockHistory::class);

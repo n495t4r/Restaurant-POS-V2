@@ -31,22 +31,26 @@ class PaymentMethodResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Toggle::make('is_active')
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->required(),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
             ]);
     }
 
-    
- 
-public static function infolist(Infolist $infolist): Infolist
-{
-    return $infolist
-        ->schema([
-            Infolists\Components\TextEntry::make('name'),
-            Infolists\Components\TextEntry::make('description')
-            ->columnSpanFull(),
-        ]);
-}
+
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\TextEntry::make('name'),
+                Infolists\Components\TextEntry::make('description')
+                    ->columnSpanFull(),
+            ]);
+    }
 
     public static function table(Table $table): Table
     {
@@ -56,6 +60,10 @@ public static function infolist(Infolist $infolist): Infolist
                     ->searchable(),
                 Tables\Columns\TextColumn::make('description')
                     ->searchable(),
+                    Tables\Columns\IconColumn::make('is_active')
+                    ->sortable()
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

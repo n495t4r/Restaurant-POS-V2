@@ -11,23 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('expenses', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('category_id'); // Define category_id as unsigned big integer
-            $table->foreignId('user_id'); 
-            $table->string('title');
-            $table->decimal('amount', 10, 2);
-            $table->foreignId('payment_method_id')->nullable();
-            $table->date('date');
-            $table->text('description')->nullable();
-            $table->timestamps();
-        
-            // Define foreign key constraint
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('category_id')->references('id')->on('expense_categories')->onDelete('cascade');
-            $table->foreign('payment_method_id')->references('id')->on('payment_methods')->onDelete('cascade');
+        if (!Schema::hasTable('expenses')) {
 
-        });
+            Schema::create('expenses', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('category_id'); // Define category_id as unsigned big integer
+                $table->foreignId('user_id');
+                $table->string('title');
+                $table->decimal('amount', 10, 2);
+                $table->foreignId('payment_method_id')->nullable();
+                $table->date('date');
+                $table->text('description')->nullable();
+                $table->timestamps();
+
+                // Define foreign key constraint
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('category_id')->references('id')->on('expense_categories')->onDelete('cascade');
+                $table->foreign('payment_method_id')->references('id')->on('payment_methods')->onDelete('cascade');
+            });
+        }
     }
 
     /**

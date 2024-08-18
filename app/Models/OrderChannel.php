@@ -9,7 +9,11 @@ class OrderChannel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['channel','user_id'];
+    protected $fillable = ['channel','user_id','is_active'];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function orders()
     {

@@ -11,16 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('order_channels')) {
-
-            Schema::create('order_channels', function (Blueprint $table) {
+        if (!Schema::hasTable('product_categories')) {
+            Schema::create('product_categories', function (Blueprint $table) {
                 $table->id();
-                $table->string('channel');
-                $table->foreignId('user_id');
-                $table->boolean('is_active')->default(true);
+                $table->string('name');
+                $table->unsignedBigInteger('parent_id')->nullable();
+                $table->foreign('parent_id')->references('id')->on('product_categories')->onDelete('cascade');
                 $table->timestamps();
-
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             });
         }
     }
@@ -30,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('order_channels');
+        Schema::dropIfExists('product_categories');
     }
 };

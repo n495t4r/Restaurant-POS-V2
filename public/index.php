@@ -46,6 +46,9 @@ require __DIR__.'/../vendor/autoload.php';
 
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+date_default_timezone_set('Africa/Lagos');
+
+
 $kernel = $app->make(Kernel::class);
 
 $response = $kernel->handle(

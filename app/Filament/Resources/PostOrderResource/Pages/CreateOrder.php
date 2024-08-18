@@ -45,7 +45,10 @@ protected function handleRecordCreation(array $data): Model
     DB::beginTransaction();
 
     try {
+        $payment_method_id = $data['payment_method_id'];
+
         // Create the order
+        unset($data['payment_method_id']);
         $order = Order::create($data);
 
         $orderPrice = 0; // Initialize a variable to store total price
@@ -78,7 +81,7 @@ protected function handleRecordCreation(array $data): Model
         $payment->order_id = $order->id; // Set order_id from the created Order
         $payment->user_id = $data['user_id'];
         if ($data['paid']) {
-            $payment->payment_method_id = $data['payment_method_id'];
+            $payment->payment_method_id = $payment_method_id;
         }
         $payment->paid = $data['paid'];
 

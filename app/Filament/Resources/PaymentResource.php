@@ -46,7 +46,7 @@ class PaymentResource extends Resource
                                         return Order::whereNotIn('id', Order::full_payment())
                                         ->whereNot('status', 'failed')
                                         ->orderBy('id', 'desc')
-                                        ->pluck('id');
+                                        ->pluck('id','id');
                                         
                                     }
                                 )
@@ -79,7 +79,7 @@ class PaymentResource extends Resource
                                 ->placeholder(fn (Get $get): float => $get('order.price') - $get('total_paid'))
                                 ->maxValue(fn (Get $get): float => $get('order.price') - $get('total_paid'))
                                 ->minValue(50)
-                                ->numeric()
+                                ->numeric(),
                         ]),
                     Grid::make(1)
                         ->columnSpanFull()

@@ -43,6 +43,10 @@ class CustomerResource extends Resource
                 Forms\Components\TextInput::make('avatar')
                     ->maxLength(191)
                     ->default(null),
+                Forms\Components\Toggle::make('is_active')
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->required(),
                 // Forms\Components\TextInput::make('user_id')
                 //     ->required()
                 //     ->numeric(),
@@ -64,6 +68,10 @@ class CustomerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->searchable(),
+                    Tables\Columns\IconColumn::make('is_active')
+                    ->sortable()
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('avatar')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),

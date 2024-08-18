@@ -165,11 +165,11 @@ class OrderResource extends Resource
                                                     $subTotal = 0;
 
                                                     foreach ($items as $item) {
-                                                        $output .= '<strong>' . $item->quantity . 'x </strong>' . $item->product->name . ' | ' . $item->price . "\n";
+                                                        $output .= '<strong>' . $item->quantity . 'x </strong>' . $item->product->name . ' | ' . number_format($item->price, 2) . "\n";
                                                         $subTotal += $item->price;
                                                     }
 
-                                                    $output .= "<i>Sub-Total: " . $subTotal . '</i>';
+                                                    $output .= "<i>Sub-Total: " . number_format($subTotal, 2) . '</i>';
                                                     $output .= "\n\n";
 
                                                     return nl2br($output);
@@ -256,8 +256,38 @@ class OrderResource extends Resource
                     ->copyMessage('ID copied')
                     ->copyMessageDuration(1500)
                     ->sortable(),
+                // Panel::make([
+                // Stack::make([               
+                Tables\Columns\TextColumn::make('Orders')
+                    ->label('Order items')
+                    // ->state(fn (Order $record): string => $record->items[0]->quantity)
+                    ->state(function (Model $record): array {
+                        $itemNames = [];
+
+                        // Loop through each item associated with the record
+                        foreach ($record->items as $item) {
+                            // Get the product name for the current item
+                            $productName = $item->product->name;
+
+                            // Get the quantity for the current item
+                            $itemQuantity = $item->quantity;
+
+                            // Concatenate the product name and quantity
+                            $itemNames[] = "$itemQuantity" . "x " . "$productName";
+                        }
+
+                        // Join the array of item names into a single string separated by commas
+                        // return implode(', ', $itemNames);
+                        return $itemNames;
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->listWithLineBreaks(),
+                // ]),
+
+                // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
                     ->options(function (): array {
                         return Customer::all()->pluck('name', 'id')->all();
@@ -291,6 +321,7 @@ class OrderResource extends Resource
                         Sum::make()->money('NGN')->label('Total'),
                         // Range::make()
                     ])
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payments.payment_method.name')
                     ->searchable()
@@ -300,10 +331,11 @@ class OrderResource extends Resource
                     ->placeholder('unpaid')
                     // ->relationship('payments', 'payment_method_id')
                     ->label('Payment type')
+                    ->toggleable(isToggledHiddenByDefault: false)
                 // ->multiple()
                 ,
                 Tables\Columns\TextColumn::make('order')
-                    ->label('Payment')
+                    ->label('Payment status')
                     ->badge()
                     ->default('unknown')
                     ->formatStateUsing(function ($record) {
@@ -322,7 +354,7 @@ class OrderResource extends Resource
                             return 'unpaid';
                         }
                         // return $paymentDifference;
-                    })
+                    })->toggleable(isToggledHiddenByDefault: true)
                     ->color(fn (string $state): string => match ($state) {
                         'unknown' => 'gray',
                         'partial' => 'warning',
@@ -365,33 +397,6 @@ class OrderResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                    // Panel::make([
-                        // Stack::make([               
-                            Tables\Columns\TextColumn::make('Orders')
-                            // ->state(fn (Order $record): string => $record->items[0]->quantity)
-                            ->state(function (Model $record): array {
-                                $itemNames = [];
-    
-                                // Loop through each item associated with the record
-                                foreach ($record->items as $item) {
-                                    // Get the product name for the current item
-                                    $productName = $item->product->name;
-    
-                                    // Get the quantity for the current item
-                                    $itemQuantity = $item->quantity;
-    
-                                    // Concatenate the product name and quantity
-                                    $itemNames[] = "$itemQuantity"."x "."$productName";
-                                }
-    
-                                // Join the array of item names into a single string separated by commas
-                                // return implode(', ', $itemNames);
-                                return $itemNames;
-                            })
-                            ->listWithLineBreaks(),
-                        // ]),
-                        
-                    // ])->collapsible(),
             ])
             ->searchPlaceholder('ID, Amount, Customer etc')
             ->defaultSort('id', 'desc')
@@ -400,18 +405,68 @@ class OrderResource extends Resource
             ->filters([
                 Filter::make('POS')
                     ->label('ATM Card/POS')
-                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 3);
                     })),
                 Filter::make('Cash')
-                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 1);
                     })),
                 Filter::make('Transfer')
-                    ->query(fn (Builder $query) => $query->orWhereHas('payments', function ($query) {
+                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 2);
                     })),
 
+                SelectFilter::make('payments')
+                    ->multiple()
+                    ->form([
+                        Select::make('pay_method')
+                        ->multiple()
+                        ->options(function (): array {
+                            return PaymentMethod::all()->pluck('name', 'id')->all();
+                        }),
+                    ])
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        // dd($data['pay_method']);
+                        if ($data['pay_method'] == 1 ?? null) {
+                            // dd($data['pay_method']);
+
+                            $indicators[] = Indicator::make('Cash')
+                                ->removeField('Cash');
+                        }
+
+                        if ($data['pay_method'] == 2 ?? null) {
+                            $indicators[] = Indicator::make('Transfer')
+                                ->removeField('Transfer');
+                        }
+
+                        if ($data['pay_method'] == 3 ?? null) {
+                            $indicators[] = Indicator::make('ATM/POS')
+                                ->removeField('ATM/POS');
+                        }
+
+                        return $indicators;
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+
+                        // dd($data['pay_method']);
+
+                        return $query
+                            ->when(
+                                $data['pay_method'] == 1,
+                                // dd($data['pay_method']),
+
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
+                            )
+                            ->when(
+                                $data['pay_method'] == 2,
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
+                            )->when(
+                                $data['pay_method'] == 3,
+                                fn (Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
+                            );
+                    }),
                 SelectFilter::make('id')
                     ->multiple()
                     ->form([
@@ -466,7 +521,7 @@ class OrderResource extends Resource
                     ]),
 
                 SelectFilter::make('customer_id')
-                ->multiple()
+                    ->multiple()
                     ->label('Customer')
                     ->options(function (): array {
                         return Customer::all()->pluck('name', 'id')->all();
@@ -526,7 +581,7 @@ class OrderResource extends Resource
                     })
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

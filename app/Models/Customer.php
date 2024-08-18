@@ -18,6 +18,11 @@ class Customer extends Model
         'address',
         'avatar',
         'user_id',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function getAvatarUrl()

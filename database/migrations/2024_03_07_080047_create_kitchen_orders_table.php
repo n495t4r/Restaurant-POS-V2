@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('kitchen_orders', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('order_id');
-            $table->text('details');
-            $table->boolean('is_done')->default(false);
-            $table->timestamps();
+        if (!Schema::hasTable('kitchen_orders')) {
 
-            // Foreign key constraint
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
-        });
+            Schema::create('kitchen_orders', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('order_id');
+                $table->text('details');
+                $table->boolean('is_done')->default(false);
+                $table->timestamps();
+
+                // Foreign key constraint
+                $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            });
+        }
     }
 
     /**

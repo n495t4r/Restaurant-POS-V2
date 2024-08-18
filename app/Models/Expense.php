@@ -38,6 +38,33 @@ class Expense extends Model
         return $this->belongsTo(ExpenseCategory::class);
     }
 
+      /**
+     * Find the expense sum for a specified date. Default param will return sum of all expenses today
+     *
+     * @param int $payment_method_id
+     * 1 => Cash
+     * 2 => Transfer
+     * 3 => ATM/POS
+     * @param string $date eg. 'today', 'yesterday'
+     * @return float
+     */
+    public static function sum_by_method(int $payment_method_id = 0, string $date = 'today'): float
+    {
+        if ($date == 'yesterday'){
+            $date = now();
+        }else{
+            $date = now();
+        }
+        //return sum of all expenses today
+        if($payment_method_id == 0){
+            return self::whereDate('created_at', $date)
+            ->sum('amount');
+        }
+        return self::where('payment_method_id', $payment_method_id)
+            ->whereDate('created_at', $date)
+            ->sum('amount');
+    }
+
     public static function totalExpense2($categoryId, $filter)
     {
         $query = self::where('category_id', $categoryId);

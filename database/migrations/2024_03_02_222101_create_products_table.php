@@ -11,19 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('image')->nullable();
-            $table->decimal('price',8, 2);
-            $table->integer('quantity');
-            $table->unsignedBigInteger('product_category_id')->nullable();
-            $table->foreign('product_category_id')->references('id')->on('product_categories');
-            $table->boolean('status')->default(true);
-            $table->integer('counter')->default(0);
-            $table->timestamps();
-        });
+        if(!Schema::hasTable('products')){
+            Schema::create('products', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->string('image')->nullable();
+                $table->decimal('price',8, 2);
+                $table->integer('quantity');
+                $table->unsignedBigInteger('product_category_id')->nullable();
+                $table->foreign('product_category_id')->references('id')->on('product_categories');
+                $table->boolean('status')->default(true);
+                $table->integer('counter')->default(0);
+                $table->timestamps();
+            });
+        }
+        
     }
 
     /**

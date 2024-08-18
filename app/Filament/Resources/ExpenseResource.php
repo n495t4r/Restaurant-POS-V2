@@ -54,6 +54,7 @@ class ExpenseResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('title')
+                    ->wrap()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->numeric()
@@ -61,6 +62,8 @@ class ExpenseResource extends Resource
                         Sum::make()->money('NGN')->label('Total'),
                     ])
                     ->sortable(),
+                Tables\Columns\TextColumn::make('payment_method.name')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('description')
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -73,6 +76,7 @@ class ExpenseResource extends Resource
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -80,7 +84,7 @@ class ExpenseResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ]) ->defaultSort('date', 'desc')
+            ])->defaultSort('date', 'desc')
             ->filters([
                 //
             ])

@@ -1,5 +1,5 @@
 <!-- resources/views/filament/pages/reports/stock-management.blade.php -->
-
+hy
 <x-filament::page>
     <form wire:submit.prevent="loadReportData">
         <x-filament::card>

@@ -46,9 +46,9 @@ use Illuminate\Support\Facades\DB;
 class PostOrderResource extends Resource
 {
     protected static ?string $model = Order::class;
-    protected static ?string $modelLabel = 'Post Order Res v2';
+    protected static ?string $modelLabel = 'Cart';
 
-    protected static ?string $navigationGroup = 'Order';
+    // protected static ?string $navigationGroup = 'Order';
     protected static ?int $navigationSort = 0;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -57,16 +57,16 @@ class PostOrderResource extends Resource
     {
         // $products = Product::all()->where('status','!=',0); //change to customer.name instead
 
-        $products = Product::where('status', '1')->get();
+        $products = Product::where('status', true)->get();
 
         $products2 = [];
         foreach ($products as $product) {
             $formattedString = $product->name . ' | N' . $product->price . ' | ' . $product->quantity;
             $products2[$product->id] = $formattedString;
         }
-        $customers = Customer::pluck('name', 'id')->toArray(); //change to customer.name instead
-        $payment_methods = PaymentMethod::pluck('name', 'id')->toArray(); //change to customer.name instead
-        $channels = OrderChannel::pluck('channel', 'id')->toArray(); //change to customer.name instead
+        $customers = Customer::where('is_active', true)->pluck('name', 'id')->toArray(); //change to customer.name instead
+        $payment_methods = PaymentMethod::where('is_active', true)->pluck('name', 'id')->toArray(); //change to customer.name instead
+        $channels = OrderChannel::where('is_active', true)->pluck('channel', 'id')->toArray(); //change to customer.name instead
 
         $options = [];
         // $packName = 'Pack_' . time(); // Append current timestamp to pack name
@@ -212,7 +212,7 @@ class PostOrderResource extends Resource
                                     ->columnSpan('full')
                                     ->schema([
                                         Select::make('product_id')
-                                            ->relationship('product', 'name')
+                                            // ->relationship('product', 'name')
                                             ->options(
                                                 // $products->mapWithKeys(function (Product $product) {
                                                 //     return [$product->id => sprintf('%s | N%s | %s', $product->name, $product->price, $product->quantity)];

@@ -11,18 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 20);
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('address')->nullable();
-            $table->string('avatar')->nullable();
-            $table->foreignId('user_id');
-            $table->timestamps();
+        if (!Schema::hasTable('customers')) {
 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
+            Schema::create('customers', function (Blueprint $table) {
+                $table->id();
+                $table->string('name', 20);
+                $table->string('email')->nullable();
+                $table->string('phone');
+                $table->string('address')->nullable();
+                $table->string('avatar')->nullable();
+                $table->foreignId('user_id');
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            });
+        }
     }
     /**
      * Reverse the migrations.
