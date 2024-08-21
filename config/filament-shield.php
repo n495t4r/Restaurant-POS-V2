@@ -66,7 +66,7 @@ return [
         'enabled' => true,
 
         'pages' => [
-            'Dashboard',
+            // 'Dashboard',
         ],
 
         'widgets' => [
@@ -83,7 +83,7 @@ return [
     ],
 
     'register_role_policy' => [
-        'enabled' => false,
+        'enabled' => true,
     ],
 
 ];

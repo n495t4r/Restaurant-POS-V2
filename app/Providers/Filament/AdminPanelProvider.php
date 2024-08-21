@@ -27,8 +27,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->databaseNotifications()
             ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('peva')
+            ->path('peva')
             ->login()
             ->colors([
                 'primary' => Color::Amber,

@@ -54,10 +54,10 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
-    {
-        return PostOrderResource::form($form);
-    }
+    // public static function form(Form $form): Form
+    // {
+    //     // return PostOrderResource::form($form);
+    // }
 
     public static function infolist(Infolist $infolist): Infolist
     {
@@ -125,7 +125,7 @@ class OrderResource extends Resource
                                             TextEntry::make('status')
                                                 ->label('Order status')
                                                 ->badge()
-                                                ->color(fn (string $state): string => match ($state) {
+                                                ->color(fn(string $state): string => match ($state) {
                                                     'null' => 'gray',
                                                     'pending' => 'warning',
                                                     'processed' => 'success',
@@ -133,16 +133,10 @@ class OrderResource extends Resource
                                                     default => 'secondary'
                                                 }),
                                             TextEntry::make('channel.channel'),
-                                            TextEntry::make('payments.status')
+                                            TextEntry::make('payments.payment_method.name')
                                                 ->default('N/A')
-                                                ->badge()
-                                                ->color(fn (string $state): string => match ($state) {
-                                                    'null' => 'gray',
-                                                    'partial' => 'warning',
-                                                    'paid' => 'success',
-                                                    'unpaid' => 'danger',
-                                                    default => 'secondary'
-                                                }),
+                                            // ->badge()
+                                            ,
                                             TextEntry::make('created_at')
                                                 ->label('Posted')
                                                 ->since(),
@@ -232,16 +226,15 @@ class OrderResource extends Resource
             // ->paginated([10, 25, 50, 100, 'all'])
             ->groups([
                 'channel.channel',
-                'pay_method.name',
+                // 'payments.payment_method.name',
                 Group::make('created_at')
                     ->collapsible()
                     ->label('Daily Summary')
                     ->date()
-
-                    ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderBy('created_at', $direction))
+                    ->orderQueryUsing(fn(Builder $query, string $direction) => $query->orderBy('created_at', $direction))
                 // ->sortable(descending)
             ])->groupRecordsTriggerAction(
-                fn (Action $action) => $action
+                fn(Action $action) => $action
                     ->button()
                     ->label('Group records'),
             )->groupingSettingsInDropdownOnDesktop()
@@ -328,9 +321,9 @@ class OrderResource extends Resource
                     ->wrap()
                     ->words(3)
                     ->size(TextColumnSize::ExtraSmall)
-                    ->placeholder('unpaid')
+                    ->placeholder('unselected')
                     // ->relationship('payments', 'payment_method_id')
-                    ->label('Payment type')
+                    ->label('Payment method')
                     ->toggleable(isToggledHiddenByDefault: false)
                 // ->multiple()
                 ,
@@ -355,7 +348,7 @@ class OrderResource extends Resource
                         }
                         // return $paymentDifference;
                     })->toggleable(isToggledHiddenByDefault: true)
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'unknown' => 'gray',
                         'partial' => 'warning',
                         'paid' => 'success',
@@ -366,11 +359,18 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->label('Order status')
-                    ->color(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(function ($state){
+                        if ($state == 1){
+                            return 'completed';
+                        }else if ($state == 2){
+                            return 'pending';
+                        }else if ($state == 0){ return 'failed';}
+                    })
+                    ->color(fn(string $state): string => match ($state) {
                         'null' => 'gray',
-                        'pending' => 'warning',
-                        'processed' => 'success',
-                        'failed' => 'danger',
+                        '2' => 'warning',
+                        '1' => 'success',
+                        '0' => 'danger',
                         default => 'secondary'
                     })
                     ->sortable(),
@@ -405,68 +405,68 @@ class OrderResource extends Resource
             ->filters([
                 Filter::make('POS')
                     ->label('ATM Card/POS')
-                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
+                    ->query(fn(Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 3);
                     })),
                 Filter::make('Cash')
-                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
+                    ->query(fn(Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 1);
                     })),
                 Filter::make('Transfer')
-                    ->query(fn (Builder $query) => $query->WhereHas('payments', function ($query) {
+                    ->query(fn(Builder $query) => $query->WhereHas('payments', function ($query) {
                         $query->where('payment_method_id', '=', 2);
                     })),
 
-                SelectFilter::make('payments')
-                    ->multiple()
-                    ->form([
-                        Select::make('pay_method')
-                        ->multiple()
-                        ->options(function (): array {
-                            return PaymentMethod::all()->pluck('name', 'id')->all();
-                        }),
-                    ])
-                    ->indicateUsing(function (array $data): array {
-                        $indicators = [];
-                        // dd($data['pay_method']);
-                        if ($data['pay_method'] == 1 ?? null) {
-                            // dd($data['pay_method']);
+                // SelectFilter::make('payments')
+                //     ->multiple()
+                //     ->form([
+                //         Select::make('pay_method')
+                //         ->multiple()
+                //         ->options(function (): array {
+                //             return PaymentMethod::all()->pluck('name', 'id')->all();
+                //         }),
+                //     ])
+                //     ->indicateUsing(function (array $data): array {
+                //         $indicators = [];
+                //         // dd($data['pay_method']);
+                //         if ($data['pay_method'] == 1 ?? null) {
+                //             // dd($data['pay_method']);
 
-                            $indicators[] = Indicator::make('Cash')
-                                ->removeField('Cash');
-                        }
+                //             $indicators[] = Indicator::make('Cash')
+                //                 ->removeField('Cash');
+                //         }
 
-                        if ($data['pay_method'] == 2 ?? null) {
-                            $indicators[] = Indicator::make('Transfer')
-                                ->removeField('Transfer');
-                        }
+                //         if ($data['pay_method'] == 2 ?? null) {
+                //             $indicators[] = Indicator::make('Transfer')
+                //                 ->removeField('Transfer');
+                //         }
 
-                        if ($data['pay_method'] == 3 ?? null) {
-                            $indicators[] = Indicator::make('ATM/POS')
-                                ->removeField('ATM/POS');
-                        }
+                //         if ($data['pay_method'] == 3 ?? null) {
+                //             $indicators[] = Indicator::make('ATM/POS')
+                //                 ->removeField('ATM/POS');
+                //         }
 
-                        return $indicators;
-                    })
-                    ->query(function (Builder $query, array $data): Builder {
+                //         return $indicators;
+                //     })
+                //     ->query(function (Builder $query, array $data): Builder {
 
-                        // dd($data['pay_method']);
+                //         // dd($data['pay_method']);
 
-                        return $query
-                            ->when(
-                                $data['pay_method'] == 1,
-                                // dd($data['pay_method']),
+                //         return $query
+                //             ->when(
+                //                 $data['pay_method'] == 1,
+                //                 // dd($data['pay_method']),
 
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
-                            )
-                            ->when(
-                                $data['pay_method'] == 2,
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
-                            )->when(
-                                $data['pay_method'] == 3,
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
-                            );
-                    }),
+                //                 fn (Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
+                //             )
+                //             ->when(
+                //                 $data['pay_method'] == 2,
+                //                 fn (Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
+                //             )->when(
+                //                 $data['pay_method'] == 3,
+                //                 fn (Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
+                //             );
+                //     }),
                 SelectFilter::make('id')
                     ->multiple()
                     ->form([
@@ -501,18 +501,18 @@ class OrderResource extends Resource
                         return $query
                             ->when(
                                 $data['pay_status'] == 'partial',
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
+                                fn(Builder $query): Builder => $query->whereIn('id', Order::partial_payment()),
                             )
                             ->when(
                                 $data['pay_status'] == 'unpaid',
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
+                                fn(Builder $query): Builder => $query->whereIn('id', Order::no_payment()),
                             )->when(
                                 $data['pay_status'] == 'paid',
-                                fn (Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
+                                fn(Builder $query): Builder => $query->whereIn('id', Order::full_payment()),
                             );
                     }),
 
-                SelectFilter::make('status')
+                SelectFilter::make('Order status')
                     ->multiple()
                     ->options([
                         'pending' => 'Pending',
@@ -535,18 +535,18 @@ class OrderResource extends Resource
                         return OrderChannel::all()->pluck('channel', 'id')->all();
                     }),
 
-                SelectFilter::make('items.product.product_category.name')
-                    ->label('Category')
-                    ->multiple()
-                    ->options(function (): array {
-                        return ProductCategory::all()->pluck('name', 'id')->all();
-                    }),
-                // SelectFilter::make('user_id')
-                //     ->label('Created by')
+                // SelectFilter::make('items.product.product_category.name')
+                //     ->label('Category')
                 //     ->multiple()
                 //     ->options(function (): array {
-                //         return User::all()->pluck('first_name', 'id')->all();
+                //         return ProductCategory::all()->pluck('name', 'id')->all();
                 //     }),
+                SelectFilter::make('user_id')
+                    ->label('Created by')
+                    ->multiple()
+                    ->options(function (): array {
+                        return User::all()->pluck('first_name', 'id')->all();
+                    }),
                 Filter::make('created_at')
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
@@ -572,21 +572,21 @@ class OrderResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     })
             ])
             ->actions([
-                // Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

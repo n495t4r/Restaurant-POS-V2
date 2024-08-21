@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::redirect('/', '/admin');
+Route::redirect('/', '/peva');
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -26,7 +26,7 @@ Route::redirect('/', '/admin');
 
 
 
-Route::prefix('/admin')->middleware('auth')->group(function () {
+Route::prefix('/peva')->middleware('auth')->group(function () {
     
     // Route::get('/stock', [StockManagementController::class, 'index'])->name('stock.index');
 

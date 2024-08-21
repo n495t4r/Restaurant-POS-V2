@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->foreignId('customer_id')->nullable();
                 $table->foreignId('channel_id')->nullable();
                 $table->foreignId('user_id');
-                $table->text('status', ['pending', 'processed', 'failed'])->default('pending');
+                $table->integer('status')->default(2);
                 $table->string('commentForCook')->nullable();
                 $table->string('reason')->nullable();
                 $table->timestamps();
