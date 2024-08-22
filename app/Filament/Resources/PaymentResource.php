@@ -8,7 +8,9 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Split;
 use Filament\Forms\Form;
@@ -16,6 +18,8 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -44,7 +48,7 @@ class PaymentResource extends Resource
                                     function () {
 
                                         return Order::whereNotIn('id', Order::full_payment())
-                                        ->whereNot('status', 'failed')
+                                        ->whereNot('status', 0)
                                         ->orderBy('id', 'desc')
                                         ->pluck('id','id');
                                         
@@ -169,7 +173,38 @@ class PaymentResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->filters([
-                //
+                Filter::make('created_at')
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['from'] ?? null) {
+                            $indicators[] = Indicator::make('From ' . Carbon::parse($data['from'])->toFormattedDateString())
+                                ->removeField('from');
+                        }
+
+                        if ($data['until'] ?? null) {
+                            $indicators[] = Indicator::make('Until ' . Carbon::parse($data['until'])->toFormattedDateString())
+                                ->removeField('until');
+                        }
+
+                        return $indicators;
+                    })
+                    ->form([
+                        DatePicker::make('from')
+                            ->default(now()),
+                        DatePicker::make('until')->afterOrEqual('from'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                        )
+                        ->when(
+                            $data['until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                        );
+                })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

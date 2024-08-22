@@ -75,6 +75,42 @@ class Order extends Model
         return 'Walk-in Customer';
     }
 
+    public static function failed_order($date = null){
+        if($date){
+            return self::where('status', 0)
+            ->whereDate('created_at', $date)->pluck('id','id');    
+        }
+        
+        return self::where('status', 0)->pluck('id','id');
+    }
+
+    public static function staff_order($date = null){
+        if($date){
+            return self::where('channel_id', 6)
+            ->whereDate('created_at', $date)->pluck('id','id');    
+        }
+        
+        return self::where('channel_id', 6)->pluck('id','id');
+    }
+
+    public static function glovo_order($date = null){
+        if($date){
+            return self::where('channel_id', 1)
+            ->whereDate('created_at', $date)->pluck('id','id');    
+        }
+        
+        return self::where('channel_id', 1)->pluck('id','id');
+    }
+
+    public static function chowdeck_order($date = null){
+        if($date){
+            return self::where('channel_id', 3)
+            ->whereDate('created_at', $date)->pluck('id','id');    
+        }
+        
+        return self::where('channel_id', 3)->pluck('id','id');
+    }
+
     public static function partial_payment()
     {
         $itemTotals = DB::table('order_items')

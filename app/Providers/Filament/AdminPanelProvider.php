@@ -60,7 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 FilamentDeveloperLoginsPlugin::make()
-                    ->enabled()
+                    ->enabled(app()->environment('local'))
                     ->users([
                         'Manager' => 'onah.ov@gmail.com',
                         'Cashier' => 'cashier@peva.com',

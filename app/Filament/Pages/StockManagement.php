@@ -79,92 +79,8 @@ class StockManagement extends Page
                         '2xl' => 5,
                     ])
                         ->schema([
-                            Fieldset::make('Details')
-                                // ->collapsed()
-                                ->schema([
-                                    Grid::make([
-                                        'default' => 1,
-                                        'sm' => 3,
-                                        'md' => 3,
-                                        'lg' => 4,
-                                        'xl' => 5,
-                                        '2xl' => 5,
-                                    ])
-                                        ->schema([
-                                            TextEntry::make('id')
-                                                ->label('Order ID')
-                                                ->copyable()
-                                                ->copyMessage('Copied!'),
-                                            TextEntry::make('status')
-                                                ->label('Order status')
-                                                ->badge()
-                                                ->color(fn (string $state): string => match ($state) {
-                                                    'null' => 'gray',
-                                                    'pending' => 'warning',
-                                                    'processed' => 'success',
-                                                    'failed' => 'danger',
-                                                    default => 'secondary'
-                                                }),
-                                            TextEntry::make('channel.channel'),
-                                            TextEntry::make('cash_payment')
-                                                ->default(0)
-                                                ->badge()
-                                                ->money('NGN')
-
-                                                ->formatStateUsing(function () {
-                                                    $sum_paid = Payment::sum_by_method(1);
-                                                    return number_format($sum_paid, 2);
-                                                }),
-
-                                            TextEntry::make('Transfer_transaction')
-                                                ->default(0)
-                                                ->badge()
-                                                ->formatStateUsing(function () {
-                                                    $sum_paid = Payment::sum_by_method(2);
-                                                    return number_format($sum_paid, 2);
-                                                }),
-                                            TextEntry::make('ATM/POS_payment')
-                                                ->default(0)
-                                                ->badge()
-                                                ->formatStateUsing(function () {
-                                                    $sum_paid = Payment::sum_by_method(3);
-                                                    return number_format($sum_paid, 2);
-                                                }),
-                                            TextEntry::make('Staff_order')
-                                                ->default(0)
-                                                ->badge()
-                                                ->formatStateUsing(function () {
-                                                    $sum_paid = Payment::sum_by_method(4);
-                                                    return number_format($sum_paid, 2);
-                                                }),
-                                            TextEntry::make('created_at')
-                                                ->label('Posted')
-                                                ->since(),
-                                        ]),
-                                    Grid::make([
-                                        'default' => 1,
-                                        'sm' => 2,
-                                        'md' => 2,
-                                        'lg' => 2,
-                                        'xl' => 2,
-                                        '2xl' => 2,
-                                    ])
-                                        ->schema([
-                                            TextEntry::make('items')
-                                                // ->label('')
-                                                ->html()
-                                                ->formatStateUsing(function ($record) {
-                                                    // unpaidOrders();
-
-                                                    return nl2br($this->unpaidOrders());
-                                                }),
-
-                                            TextEntry::make('commentForCook')
-                                                ->label('Note for cook')
-                                                ->default('none')
-                                        ])
-                                ]),
-                            Fieldset::make('More details')
+                            
+                            Fieldset::make('Closing info')
                                 // ->collapsed()
                                 ->schema([
                                     Grid::make([
@@ -179,81 +95,143 @@ class StockManagement extends Page
                                             TextEntry::make('created_at')
                                                 ->label('Date')
                                                 ->dateTime(),
-                                            TextEntry::make('customer.name'),
-
-                                            // TextEntry::make('packs.items_sum_price')->sum('packs.items','price')
-                                            // ->label('Amount'),
-                                            // TextEntry::make('payment_method.name'),
-                                            TextEntry::make('reason')
-                                                ->label('Cancellation note'),
                                             TextEntry::make('user')
                                                 ->formatStateUsing(function (Order $record) {
                                                     $user = $record->user; // Access the related user
                                                     return $user->first_name . ' ' . $user->last_name;
                                                 })
-                                                ->label('Order posted by'),
+                                                ->label('On duty'),
                                             // ...
                                         ])
                                 ])
                         ]),
                 ]),
 
-                Section::make('Stock Reports')
+                Section::make('Reports')
                     ->columns(2)
                     ->compact()
                     ->collapsible()
                     ->aside()
-                    ->description('View detailed reports about your stock levels, transactions, and more.')
+                    ->description('View detailed reports of today\'s transactions')
 
                     ->schema([
-                        Section::make('Sales N'.number_format(Payment::sum_by_method(0),2))
-                            ->description('The items you have selected for purchase')
-                            ->columns(4)
+                        Section::make('Cashier Sales N' . number_format(
+                            OrderItem::whereNotIn('order_id', Order::failed_order())
+                                ->whereNotIn('order_id', Order::staff_order())
+                                ->whereNotIn('order_id', Order::glovo_order())
+                                ->whereNotIn('order_id', Order::chowdeck_order())
+                                ->whereDate('created_at', now())
+                                ->sum('price'),
+                            2
+                        ))
+                            ->description('Overall sales')
+                            ->columns(5)
                             ->schema([
-                                TextEntry::make('cash_payment')
+                                TextEntry::make('Cash')
                                     ->default(0)
                                     ->badge()
                                     ->money('NGN')
 
                                     ->formatStateUsing(function () {
-                                        $sum_paid = Payment::sum_by_method(1);
+                                        $sum_paid = Payment::where('payment_method_id', 1)
+                                        ->whereNotIn('order_id', Order::failed_order())
+                                        ->whereNotIn('order_id', Order::staff_order())
+                                        ->whereNotIn('order_id', Order::glovo_order())
+                                        ->whereNotIn('order_id', Order::chowdeck_order())
+                                        ->whereDate('created_at', now())
+                                        ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
 
-                                TextEntry::make('Transfer_transaction')
+                                TextEntry::make('Transfer')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
-                                        $sum_paid = Payment::sum_by_method(2);
+                                        $sum_paid = Payment::where('payment_method_id', 2)
+                                        ->whereNotIn('order_id', Order::failed_order())
+                                        ->whereNotIn('order_id', Order::staff_order())
+                                        ->whereNotIn('order_id', Order::glovo_order())
+                                        ->whereNotIn('order_id', Order::chowdeck_order())
+                                        ->whereDate('created_at', now())
+                                        ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
-                                TextEntry::make('ATM/POS_payment')
+                                TextEntry::make('ATM/POS')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
-                                        $sum_paid = Payment::sum_by_method(3);
+                                        $sum_paid = Payment::where('payment_method_id', 3)
+                                        ->whereNotIn('order_id', Order::failed_order())
+                                        ->whereNotIn('order_id', Order::staff_order())
+                                        ->whereNotIn('order_id', Order::glovo_order())
+                                        ->whereNotIn('order_id', Order::chowdeck_order())
+                                        ->whereDate('created_at', now())
+                                        ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
-                                TextEntry::make('Staff_order')
+                                TextEntry::make('Unpaid')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
-                                        $sum_paid = Payment::sum_by_method(4);
-                                        return number_format($sum_paid, 2);
+                                        $sum_price = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        $sum_paid = Payment::whereNotIn('order_id', Order::failed_order())
+                                            ->whereDate('created_at', now())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())->sum('paid');
+                                        return number_format($sum_price - $sum_paid, 2);
                                     }),
                             ])
                             ->collapsed(),
 
-                        Section::make('Expenses made')
-                            ->description('Prevent abuse by limiting the number of requests per period')
+                        Section::make('Online Sales N' . number_format(
+                            OrderItem::whereNotIn('order_id', Order::failed_order())
+                                ->whereNotIn('order_id', Order::staff_order())
+                                ->whereIn('order_id', Order::glovo_order()->merge(Order::chowdeck_order()))
+                                ->whereDate('created_at', now())
+                                ->sum('price'),
+                            2
+                        ))
+                            ->description('Overall sales')
+                            ->columns(5)
                             ->schema([
-                                TextEntry::make('Total')
+                                TextEntry::make('Chow Deck')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
-                                        $sum_paid = Expense::sum_by_method(0);
-                                        return number_format($sum_paid, 2);
+                                        $sum_price = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                            ->whereIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        // $sum_paid = Payment::whereNotIn('order_id', Order::failed_order())
+                                        //     ->whereDate('created_at', now())->sum('paid');
+                                        return number_format($sum_price, 2);
                                     }),
+                                    TextEntry::make('Glovo')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_price = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                            ->whereIn('order_id', Order::glovo_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        // $sum_paid = Payment::whereNotIn('order_id', Order::failed_order())
+                                        //     ->whereDate('created_at', now())->sum('paid');
+                                        return number_format($sum_price, 2);
+                                    }),
+                            ])
+                            ->collapsed(),
+
+                        Section::make('Expenses N' . number_format(Expense::whereDate('created_at', today())->sum('amount'), 2))
+                            ->collapsed()
+                            ->columns(5)
+                            ->description('Overal expenses')
+                            ->schema([
                                 TextEntry::make('Cash')
                                     ->default(0)
                                     ->badge()
@@ -269,6 +247,30 @@ class StockManagement extends Page
                                         return number_format($sum_paid, 2);
                                     }),
                             ])
+                            ->compact(),
+                        Section::make('Failed orders N' . number_format(OrderItem::whereIn('id', Order::failed_order())
+                            ->whereDate('created_at', now())
+                            ->sum('price'), 2))
+                            ->collapsed()
+                            ->columns(5)
+                            ->description('Sum of failed orders')
+                            ->schema([
+                                TextEntry::make('Count')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        return count(Order::failed_order(now()));
+                                    }),
+                                TextEntry::make('Amount')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_price = OrderItem::whereIn('id', Order::failed_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        return number_format($sum_price, 2);
+                                    })
+                            ])
                             ->compact()
                     ]),
 
@@ -278,7 +280,7 @@ class StockManagement extends Page
     public function unpaidOrder2()
     {
         $unpaidOrders = Order::whereNotIn('id', Order::full_payment())
-            ->where('status', '!=', 'failed')
+            ->where('status', '!=', 0)
             ->orderBy('id', 'desc')
             ->get();
 
@@ -317,7 +319,7 @@ class StockManagement extends Page
     public function unpaidOrders()
     {
         $unpaidOrders = Order::whereNotIn('id', Order::full_payment())
-            ->where('status', '!=', 'failed')
+            ->where('status', '!=', 0)
             ->whereDate('created_at', now())
             ->orderBy('id', 'desc')
             ->get();
@@ -394,7 +396,7 @@ class StockManagement extends Page
                 //     ->label('Sold')
                 //     ->sortable(),
                 TextColumn::make('items_sum_quantity')->sum([
-                    'items' => fn (Builder $query) => $query->where('package_number', 1),
+                    'items' => fn(Builder $query) => $query->where('package_number', 1),
                 ], 'quantity')
                     ->label('Sold')
                     ->sortable(),

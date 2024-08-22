@@ -141,6 +141,9 @@ return new class extends Migration
             if (!Schema::hasColumn('expenses', 'user_id')) {
                 $table->foreignId('user_id')->default(1)->constrained()->onDelete('cascade');
             }
+            if (!Schema::hasColumn('expenses', 'date')) {
+                $table->date('date')->default(DB::raw('CURRENT_DATE'));
+            }
         });
 
         // 8. Add 'is_active' column to expense_categories table
@@ -179,6 +182,13 @@ return new class extends Migration
             ->where('payment_methods', 'like', '%POS%')->update(['payment_method_id' => 3]);
         DB::table('payments')
             ->whereNull('payment_methods')->update(['payment_method_id' => 4]);
+
+        // 10. Drop permissions
+        Schema::dropIfExists('role_has_permissions');
+        Schema::dropIfExists('model_has_roles');
+        Schema::dropIfExists('model_has_permissions');
+        Schema::dropIfExists('roles');
+        Schema::dropIfExists('permissions');
 
         // Re-enable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
