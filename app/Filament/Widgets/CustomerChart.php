@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Customer;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 
 class CustomerChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 4;
 
     protected static ?string $heading = 'Customer Income';

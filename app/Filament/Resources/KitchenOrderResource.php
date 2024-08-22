@@ -28,6 +28,8 @@ class KitchenOrderResource extends Resource
     protected static ?string $model = Order::class;
     protected static ?string $modelLabel = 'Kitchen Display';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationGroup = 'Order';
     protected static ?int $navigationSort = 3;
 

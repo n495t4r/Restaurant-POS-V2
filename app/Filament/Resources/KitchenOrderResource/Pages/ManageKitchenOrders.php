@@ -5,6 +5,7 @@ namespace App\Filament\Resources\KitchenOrderResource\Pages;
 use App\Filament\Resources\KitchenOrderResource;
 use App\Models\Order;
 use Filament\Actions;
+use Filament\Navigation\NavigationItem;
 use Illuminate\Database\Eloquent\Builder;
 
 use Filament\Resources\Components\Tab;
@@ -13,7 +14,8 @@ use Filament\Resources\Pages\ManageRecords;
 class ManageKitchenOrders extends ManageRecords
 {
     protected static string $resource = KitchenOrderResource::class;
-
+    
+   
     protected function getHeaderActions(): array
     {
         return [

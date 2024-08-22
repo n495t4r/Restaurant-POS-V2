@@ -45,7 +45,7 @@ class ExpenseResource extends Resource
                     ->required(),
                 Forms\Components\DatePicker::make('date')
                     ->default(now())
-                    ->disabled(fn () => auth()->id() != 2)  //control using permissions instead - change later
+                    ->disabled(fn() => auth()->id() != 2)  //control using permissions instead - change later auth()->user()->hasPermission('super_admin')
                     ->required(),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
@@ -55,7 +55,15 @@ class ExpenseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('Expense ID')
+                    // ->numeric()
+                    ->searchable()
+                    ->copyMessage('ID copied')
+                    ->copyMessageDuration(1500)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->numeric()
                     ->sortable(),
@@ -115,16 +123,16 @@ class ExpenseResource extends Resource
                         DatePicker::make('until')->afterOrEqual('from'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                    return $query
-                        ->when(
-                            $data['from'],
-                            fn (Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
-                        )
-                        ->when(
-                            $data['until'],
-                            fn (Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
-                        );
-                })
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                            );
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

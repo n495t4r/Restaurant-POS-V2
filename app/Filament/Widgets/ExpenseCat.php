@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
@@ -11,6 +12,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class ExpenseCat extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 7;
 
     protected static ?string $heading = 'Expense Category';

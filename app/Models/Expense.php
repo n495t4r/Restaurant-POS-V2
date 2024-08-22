@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,6 +21,18 @@ class Expense extends Model
     ];
 
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Automatically set the current date if not provided
+        static::creating(function ($model) {
+            if (is_null($model->date)) {
+                $model->date = Carbon::now(); // or use Carbon::today() if you want just the date
+            }
+        });
+    }
+    
     protected $casts = [
         'date' => 'date', // Ensures the 'date' attribute is cast to a date type
     ];

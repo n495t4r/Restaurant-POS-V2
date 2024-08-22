@@ -63,7 +63,7 @@ return [
     ],
 
     'exclude' => [
-        'enabled' => true,
+        'enabled' => false,
 
         'pages' => [
             // 'Dashboard',

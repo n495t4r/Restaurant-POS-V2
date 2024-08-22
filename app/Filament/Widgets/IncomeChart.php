@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
@@ -11,8 +12,11 @@ use Flowframe\Trend\TrendValue;
 
 class IncomeChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Income';
     protected static ?int $sort = 2;
+    
     public ?string $filter = 'month';
 
     protected function getFilters(): ?array
@@ -24,6 +28,12 @@ class IncomeChart extends ChartWidget
         'year' => 'This year',
     ];
 }
+// public static function canView(): bool
+// {
+//     return auth()->id() == 2;
+
+//     // return auth()->user()->isAdmin();
+// }
 
 protected function getData(): array
 {

@@ -52,15 +52,18 @@ class StockManagement extends Page
 
     public Order $order;
 
-
-
-
-
     public function reportsInfolist(Infolist $infolist): Infolist
     {
 
-        $this->order = Order::get()->first();
+        $order = Order::whereDate('created_at', today())->first();
 
+        if ($order === null) {
+            // Handle the case where no order is found, e.g., create a new order or assign a default value
+            $this->order = new Order(); // Assign an empty Order object or handle it as needed
+        } else {
+            $this->order = $order;
+        }
+        
         // dd($this->view);
         $product = Product::all()->toArray();
         // dd($this->prod);
@@ -79,7 +82,7 @@ class StockManagement extends Page
                         '2xl' => 5,
                     ])
                         ->schema([
-                            
+
                             Fieldset::make('Closing info')
                                 // ->collapsed()
                                 ->schema([
@@ -97,6 +100,7 @@ class StockManagement extends Page
                                                 ->dateTime(),
                                             TextEntry::make('user')
                                                 ->formatStateUsing(function (Order $record) {
+                                                    // dd($record);
                                                     $user = $record->user; // Access the related user
                                                     return $user->first_name . ' ' . $user->last_name;
                                                 })
@@ -117,7 +121,7 @@ class StockManagement extends Page
                     ->schema([
                         Section::make('Cashier Sales N' . number_format(
                             OrderItem::whereNotIn('order_id', Order::failed_order())
-                                ->whereNotIn('order_id', Order::staff_order())
+                                // ->whereNotIn('order_id', Order::staff_order())
                                 ->whereNotIn('order_id', Order::glovo_order())
                                 ->whereNotIn('order_id', Order::chowdeck_order())
                                 ->whereDate('created_at', now())
@@ -134,12 +138,12 @@ class StockManagement extends Page
 
                                     ->formatStateUsing(function () {
                                         $sum_paid = Payment::where('payment_method_id', 1)
-                                        ->whereNotIn('order_id', Order::failed_order())
-                                        ->whereNotIn('order_id', Order::staff_order())
-                                        ->whereNotIn('order_id', Order::glovo_order())
-                                        ->whereNotIn('order_id', Order::chowdeck_order())
-                                        ->whereDate('created_at', now())
-                                        ->sum('paid');
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
 
@@ -148,25 +152,25 @@ class StockManagement extends Page
                                     ->badge()
                                     ->formatStateUsing(function () {
                                         $sum_paid = Payment::where('payment_method_id', 2)
-                                        ->whereNotIn('order_id', Order::failed_order())
-                                        ->whereNotIn('order_id', Order::staff_order())
-                                        ->whereNotIn('order_id', Order::glovo_order())
-                                        ->whereNotIn('order_id', Order::chowdeck_order())
-                                        ->whereDate('created_at', now())
-                                        ->sum('paid');
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
-                                TextEntry::make('ATM/POS')
+                                TextEntry::make('ATM wthd.')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
                                         $sum_paid = Payment::where('payment_method_id', 3)
-                                        ->whereNotIn('order_id', Order::failed_order())
-                                        ->whereNotIn('order_id', Order::staff_order())
-                                        ->whereNotIn('order_id', Order::glovo_order())
-                                        ->whereNotIn('order_id', Order::chowdeck_order())
-                                        ->whereDate('created_at', now())
-                                        ->sum('paid');
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
                                         return number_format($sum_paid, 2);
                                     }),
                                 TextEntry::make('Unpaid')
@@ -185,6 +189,16 @@ class StockManagement extends Page
                                             ->whereNotIn('order_id', Order::glovo_order())
                                             ->whereNotIn('order_id', Order::chowdeck_order())->sum('paid');
                                         return number_format($sum_price - $sum_paid, 2);
+                                    }),
+                                    TextEntry::make('Staff order')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_price = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                            ->whereIn('order_id', Order::staff_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        return number_format($sum_price, 2);
                                     }),
                             ])
                             ->collapsed(),
@@ -212,7 +226,7 @@ class StockManagement extends Page
                                         //     ->whereDate('created_at', now())->sum('paid');
                                         return number_format($sum_price, 2);
                                     }),
-                                    TextEntry::make('Glovo')
+                                TextEntry::make('Glovo')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
@@ -245,6 +259,17 @@ class StockManagement extends Page
                                     ->formatStateUsing(function () {
                                         $sum_paid = Expense::sum_by_method(2);
                                         return number_format($sum_paid, 2);
+                                    }),
+
+                                TextEntry::make('Staff order')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_price = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                            ->whereIn('order_id', Order::staff_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('price');
+                                        return number_format($sum_price, 2);
                                     }),
                             ])
                             ->compact(),

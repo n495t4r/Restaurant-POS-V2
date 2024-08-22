@@ -5,12 +5,15 @@ namespace App\Filament\Widgets;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\OrderItem;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 
 class StatsOverview extends BaseWidget
 {
+        use HasWidgetShield;
+
     protected static ?int $sort = 1;
 
     // public ?string $filter = 'month';
