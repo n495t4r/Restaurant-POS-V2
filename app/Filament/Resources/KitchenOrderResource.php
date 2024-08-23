@@ -56,6 +56,7 @@ class KitchenOrderResource extends Resource
     {
 
         return $table
+        ->record(Order::where('status', 2))
             ->poll('5s')
             ->paginated([12, 24, 48, 96, 'all'])
             ->columns([
