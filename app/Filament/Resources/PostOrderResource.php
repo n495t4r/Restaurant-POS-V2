@@ -45,6 +45,8 @@ use Illuminate\Support\Facades\DB;
 
 class PostOrderResource extends Resource
 {
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = Order::class;
     protected static ?string $modelLabel = 'Cart';
 
