@@ -90,14 +90,17 @@ class StockHistoryResource extends Resource
                     })
                     // ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('supply')
-                    ->formatStateUsing(function ($record) {
-                        // dd($record->id);
-                        $supply = NewStock::where('product_id', $record->id)->sum('quantity');
-                        return $supply;
-                    })
+                Tables\Columns\TextColumn::make('newstock_sum_quantity')
+                ->label('Supply')
+                ->sum('newstock','quantity')
+                    // ->formatStateUsing(function ($record) {
+                    //     // dd($record->id);
+                    //     $supply = NewStock::where('product_id', $record->id)->sum('quantity');
+                    //     return $supply;
+                    // })
                     ->default(0)
-                    ->sortable(),
+                    ->sortable()
+                    ,
                 // Tables\Columns\TextColumn::make('price')
                 //     ->label('Total')
                 // ->formatStateUsing(fn (string $state, Get $get): int => 

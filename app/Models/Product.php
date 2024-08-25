@@ -35,6 +35,11 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function newstock() : HasMany
+    {
+        return $this->hasMany(NewStock::class);
+    }
+
     public function product_category()
     {
         return $this->belongsTo(ProductCategory::class, 'product_category_id');

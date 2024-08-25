@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "arielmejiadev/filament-printable": "^2.2",
         "bezhansalleh/filament-shield": "^3.2",
         "dutchcodingcompany/filament-developer-logins": "^1.2",
         "filament/filament": "3.*",

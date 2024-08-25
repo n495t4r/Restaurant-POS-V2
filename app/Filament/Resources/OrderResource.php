@@ -223,7 +223,7 @@ class OrderResource extends Resource
             // ->groupsOnly()
             // ->defaultGroup('created_at')
 
-            // ->paginated([10, 25, 50, 100, 'all'])
+            ->paginated([10, 25, 50, 100, 200])
             ->groups([
                 'channel.channel',
                 // 'payments.payment_method.name',
@@ -246,7 +246,9 @@ class OrderResource extends Resource
                     ->label('Order ID')
                     // ->numeric()
                     ->searchable()
-                    ->copyMessage('ID copied')
+                    ->copyable()
+                    ->copyMessage('Copied')
+                    ->tooltip('click once to copy order ID')
                     ->copyMessageDuration(1500)
                     ->sortable(),
                 // Panel::make([
@@ -279,15 +281,26 @@ class OrderResource extends Resource
 
                 // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
-                    ->searchable()
+                    // ->searchable()
+                    ->disabled(function ($record) {
+                        if ($record->channel_id === 6) {
+                            return true;
+                        }
+                        return false;
+                    })
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
                     ->options(function (): array {
                         return Customer::all()->pluck('name', 'id')->all();
                     }),
                 Tables\Columns\SelectColumn::make('channel_id')
-                    ->searchable()
-                    // ->disabled()
+                    // ->searchable()
+                    // ->disabled(function($record){
+                    //     if($record->channel_id === 6){
+                    //         return true;
+                    //     }
+                    //     return false;
+                    // })
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
                     ->label('Order channel')
@@ -297,7 +310,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('items_sum_price')
                     ->sum('items', 'price')
                     ->money('NGN')
-                    ->searchable()
+                    // ->searchable()
                     ->label('Price')
                     ->summarize([
                         Sum::make()->money('NGN')->label('Total'),
@@ -307,7 +320,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('payments_sum_paid')
                     ->money('NGN')
                     ->sum('payments', 'paid')
-                    ->searchable()
+                    // ->searchable()
                     ->label('Paid')
                     ->default(0)
                     ->summarize([
@@ -317,7 +330,7 @@ class OrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payments.payment_method.name')
-                    ->searchable()
+                    // ->searchable()
                     ->wrap()
                     ->words(3)
                     ->size(TextColumnSize::ExtraSmall)
@@ -334,8 +347,6 @@ class OrderResource extends Resource
                     ->formatStateUsing(function ($record) {
                         $sum_paid = Payment::where('order_id', $record->id)->sum('paid');
                         $sum_price = OrderItem::where('order_id', $record->id)->sum('price');
-
-                        // dd($items);
 
                         $paymentDifference = $sum_price - $sum_paid;
 
@@ -357,14 +368,17 @@ class OrderResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->badge()
                     ->label('Order status')
-                    ->formatStateUsing(function ($state){
-                        if ($state == 1){
+                    ->formatStateUsing(function ($state) {
+                        if ($state == 1) {
                             return 'completed';
-                        }else if ($state == 2){
+                        } else if ($state == 2) {
                             return 'pending';
-                        }else if ($state == 0){ return 'failed';}
+                        } else if ($state == 0) {
+                            return 'failed';
+                        }
                     })
                     ->color(fn(string $state): string => match ($state) {
                         'null' => 'gray',
@@ -398,7 +412,7 @@ class OrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
 
             ])
-            ->searchPlaceholder('ID, Amount, Customer etc')
+            ->searchPlaceholder('search order ID')
             ->defaultSort('id', 'desc')
             ->filtersFormWidth(MaxWidth::Small)
             ->filtersFormColumns(2)
@@ -512,12 +526,13 @@ class OrderResource extends Resource
                             );
                     }),
 
-                SelectFilter::make('Order status')
+                SelectFilter::make('status')
+                    ->label('Order status')
                     ->multiple()
                     ->options([
-                        'pending' => 'Pending',
-                        'failed' => 'Cancelled',
-                        'processed' => 'Completed',
+                        '2' => 'Pending',
+                        '0' => 'Cancelled',
+                        '1' => 'Completed',
                     ]),
 
                 SelectFilter::make('customer_id')
@@ -581,12 +596,14 @@ class OrderResource extends Resource
                     })
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()->iconButton(),
+                Tables\Actions\DeleteAction::make()->iconButton(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
+                    \ArielMejiaDev\FilamentPrintable\Actions\PrintBulkAction::make(),
+
                 ]),
             ]);
     }

@@ -35,6 +35,8 @@ class PaymentResource extends Resource
     public static function form(Form $form): Form
     {
         $customers = Customer::pluck('name', 'id')->toArray(); //change to customer.name instead
+        $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
+            ->whereNot('status', 0)->get();
 
         return $form
             ->schema([
@@ -43,17 +45,40 @@ class PaymentResource extends Resource
                         ->columnSpanFull()
                         ->schema([
                             Forms\Components\Select::make('order_id')
+                                ->label('Unpaid orders')
                                 // ->relationship('order', 'id')
                                 ->options(
-                                    function () {
+                                    // function () {
 
-                                        return Order::whereNotIn('id', Order::full_payment())
-                                        ->whereNot('status', 0)
-                                        ->orderBy('id', 'desc')
-                                        ->pluck('id','id');
-                                        
-                                    }
+                                    //     return Order::whereNotIn('id', Order::full_payment())
+                                    //         ->whereNot('status', 0)
+                                    //         ->orderBy('id', 'desc')
+                                    //         ->pluck('id', 'id');
+
+                                    // $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
+                                    //     ->whereNot('status', 0)->get();
+
+                                    $unpaid_orders->mapWithKeys(function (Order $order) {
+                                        return [$order->id => sprintf('%s | N%s | %s', $product->name, $product->price, $product->quantity)];
+                                    })
+                                    // }
+
+
+
                                 )
+
+
+                                ->formatStateUsing(function ($state) {
+                                    $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
+                                        ->whereNot('status', 0)->get();
+                                    dd($unpaid_orders);
+                                    // $products2 = [];
+                                    // foreach ($products as $product) {
+                                    $formattedString = $unpaid_orders->id . '|' . $unpaid_orders->created_at . ' | N' . $unpaid_orders->items->sum('price') . ' | ';
+                                    // $products2[$product->id] = $formattedString;
+                                    // }
+                                    return $formattedString;
+                                })
                                 ->live()
                                 ->afterStateUpdated(function (Set $set, $state) {
                                     // dd($state);
@@ -68,7 +93,7 @@ class PaymentResource extends Resource
                                     $set('channel', array_values($query));
                                     $set('order.price', $sum_price);
                                     $set('total_paid', number_format($sum_paid, 2, '.', ''));
-                                })->disabled(fn (string $operation) => $operation == 'edit')
+                                })->disabled(fn(string $operation) => $operation == 'edit')
                                 ->required(),
 
                             Forms\Components\Hidden::make('user_id')
@@ -80,8 +105,8 @@ class PaymentResource extends Resource
                             Forms\Components\TextInput::make('paid')
                                 ->label('Pay(balance)')
                                 ->required()
-                                ->placeholder(fn (Get $get): float => $get('order.price') - $get('total_paid'))
-                                ->maxValue(fn (Get $get): float => $get('order.price') - $get('total_paid'))
+                                ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
+                                ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
                                 ->minValue(50)
                                 ->numeric(),
                         ]),
@@ -102,8 +127,8 @@ class PaymentResource extends Resource
                                 ->label('Customer')
                                 ->disabled()
                                 ->dehydrated(false)
-                                // ->disabled(fn( ?string $state) => !empty($state))
-                                ,
+                            // ->disabled(fn( ?string $state) => !empty($state))
+                            ,
                             Forms\Components\Select::make('channel')
                                 ->relationship('order.channel', 'channel')
                                 ->formatStateUsing(function ($record, string $operation) {
@@ -147,6 +172,8 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
+                    ->label('Payment ID')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.customer.name')
                     ->searchable()
@@ -157,7 +184,7 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('payment_method.name')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paid')
-                    ->numeric()
+                    ->money('NGN')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.first_name')
                     ->label('Created by')
@@ -195,16 +222,16 @@ class PaymentResource extends Resource
                         DatePicker::make('until')->afterOrEqual('from'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                    return $query
-                        ->when(
-                            $data['from'],
-                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
-                        )
-                        ->when(
-                            $data['until'],
-                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
-                        );
-                })
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -30,16 +30,16 @@ class ManageKitchenOrders extends ManageRecords
                 ->badge(Order::query()->count())
                 ->badgeColor('secondary'),
             'New' => Tab::make('New')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'pending'))
-                ->badge(Order::query()->where('status', 'pending')->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 2))
+                ->badge(Order::query()->where('status', 2)->count())
                 ->badgeColor('warning'),
-            'Rejected' => Tab::make('Rejected')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'failed'))
-                ->badge(Order::query()->where('status', 'failed')->count())
+            'Rejected' => Tab::make('Cancelled')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 0))
+                ->badge(Order::query()->where('status', 0)->count())
                 ->badgeColor('danger'),
             'Completed' => Tab::make('Completed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'processed'))
-                ->badge(Order::query()->where('status', 'failed')->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 1))
+                ->badge(Order::query()->where('status', 1)->count())
                 ->badgeColor('success'),
         ];
     }
