@@ -93,6 +93,14 @@ class Order extends Model
         return self::where('channel_id', 6)->pluck('id','id');
     }
 
+    public static function order_date($date = null){
+        if($date){
+            return self::whereDate('created_at', $date)->pluck('id','id');    
+        }
+        
+        return self::whereDate('created_at', today())->pluck('id','id');
+    }
+
     public static function glovo_order($date = null){
         if($date){
             return self::where('channel_id', 1)
