@@ -48,37 +48,37 @@ class PaymentResource extends Resource
                                 ->label('Unpaid orders')
                                 // ->relationship('order', 'id')
                                 ->options(
-                                    // function () {
+                                    function () {
 
-                                    //     return Order::whereNotIn('id', Order::full_payment())
-                                    //         ->whereNot('status', 0)
-                                    //         ->orderBy('id', 'desc')
-                                    //         ->pluck('id', 'id');
+                                        return Order::whereNotIn('id', Order::full_payment())
+                                            ->whereNot('status', 0)
+                                            ->orderBy('id', 'desc')
+                                            ->pluck('id', 'id');
 
                                     // $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
                                     //     ->whereNot('status', 0)->get();
 
-                                    $unpaid_orders->mapWithKeys(function (Order $order) {
-                                        return [$order->id => sprintf('%s | N%s | %s', $product->name, $product->price, $product->quantity)];
-                                    })
-                                    // }
+                                    // $unpaid_orders->mapWithKeys(function (Order $order) {
+                                    //     return [$order->id => sprintf('%s | N%s | %s', $product->name, $product->price, $product->quantity)];
+                                    // })
+                                    }
 
 
 
                                 )
 
 
-                                ->formatStateUsing(function ($state) {
-                                    $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
-                                        ->whereNot('status', 0)->get();
-                                    dd($unpaid_orders);
-                                    // $products2 = [];
-                                    // foreach ($products as $product) {
-                                    $formattedString = $unpaid_orders->id . '|' . $unpaid_orders->created_at . ' | N' . $unpaid_orders->items->sum('price') . ' | ';
-                                    // $products2[$product->id] = $formattedString;
-                                    // }
-                                    return $formattedString;
-                                })
+                                // ->formatStateUsing(function ($state) {
+                                //     $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
+                                //         ->whereNot('status', 0)->get();
+                                //     dd($unpaid_orders);
+                                //     // $products2 = [];
+                                //     // foreach ($products as $product) {
+                                //     $formattedString = $unpaid_orders->id . '|' . $unpaid_orders->created_at . ' | N' . $unpaid_orders->items->sum('price') . ' | ';
+                                //     // $products2[$product->id] = $formattedString;
+                                //     // }
+                                //     return $formattedString;
+                                // })
                                 ->live()
                                 ->afterStateUpdated(function (Set $set, $state) {
                                     // dd($state);
