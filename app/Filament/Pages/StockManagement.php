@@ -188,6 +188,7 @@ class StockManagement extends Page
                                             ->sum('price');
                                         $sum_paid = Payment::whereNotIn('order_id', Order::failed_order())
                                             ->whereDate('created_at', now())
+                                            ->whereIn('order_id', Order::order_date())
                                             ->whereNotIn('order_id', Order::staff_order())
                                             ->whereNotIn('order_id', Order::glovo_order())
                                             ->whereNotIn('order_id', Order::chowdeck_order())->sum('paid');
