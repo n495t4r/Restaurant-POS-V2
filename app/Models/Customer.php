@@ -34,8 +34,15 @@ class Customer extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    public function createdby(){
+    
+    
+    public function getCustomerName()
+    {
+        return $this->name;
+    }
+    
+    public function createdby()
+    {
         return $this->user->first_name;
     }
 
@@ -48,5 +55,4 @@ class Customer extends Model
     {
         return $this->hasMany(Payment::class);
     }
-    
 }

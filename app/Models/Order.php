@@ -75,6 +75,36 @@ class Order extends Model
         return 'Walk-in Customer';
     }
 
+    public static function oweing_customer(){
+        return self::whereNotIn('id', self::full_payment())->pluck('customer_id','customer_id');
+    }
+
+    public static function orderId_oweing_customer(int $id){
+        return self::where('customer_id', $id)
+        ->whereNotIn('id', self::full_payment())
+        ->pluck('id','id');
+    }
+
+    public static function unpaid_amount(int $id)
+    {
+        $order_amount = OrderItem::whereNotIn('order_id', Order::failed_order())
+            ->whereNotIn('order_id', self::staff_order())
+            ->whereNotIn('order_id', self::glovo_order())
+            ->whereNotIn('order_id', self::chowdeck_order())
+            ->whereIn('order_id', self::orderId_oweing_customer($id))
+            ->sum('price');
+
+        $partial_payment = Payment::whereNotIn('order_id', Order::failed_order())
+            ->whereNotIn('order_id', self::staff_order())
+            ->whereNotIn('order_id', self::glovo_order())
+            ->whereNotIn('order_id', self::chowdeck_order())
+            ->whereIn('order_id', self::partial_payment())
+            ->whereIn('order_id', self::orderId_oweing_customer($id))
+            ->sum('paid');
+        return $order_amount - $partial_payment;
+    
+    }
+
     public static function failed_order($date = null){
         if($date){
             return self::where('status', 0)

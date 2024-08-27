@@ -282,12 +282,7 @@ class OrderResource extends Resource
                 // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
                     // ->searchable()
-                    ->disabled(function ($record) {
-                        if ($record->channel_id === 6) {
-                            return true;
-                        }
-                        return false;
-                    })
+                    ->disabled(fn ($record) => $record->created_at->format('Y-m-d') != today()->format('Y-m-d') && auth()->id() != 2)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
                     ->options(function (): array {
@@ -303,6 +298,7 @@ class OrderResource extends Resource
                     // })
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
+                    ->disabled(fn ($record) => $record->created_at->format('Y-m-d') != today()->format('Y-m-d') && auth()->id() != 2)
                     ->label('Order channel')
                     ->options(function (): array {
                         return OrderChannel::all()->pluck('channel', 'id')->all();

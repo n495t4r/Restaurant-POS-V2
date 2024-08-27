@@ -3,6 +3,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Product;
@@ -63,7 +64,7 @@ class StockManagement extends Page
         } else {
             $this->order = $order;
         }
-        
+
         // dd($this->view);
         $product = Product::all()->toArray();
         // dd($this->prod);
@@ -194,7 +195,7 @@ class StockManagement extends Page
                                             ->whereNotIn('order_id', Order::chowdeck_order())->sum('paid');
                                         return number_format($sum_price - $sum_paid, 2);
                                     }),
-                                    TextEntry::make('Staff order')
+                                TextEntry::make('Staff order')
                                     ->default(0)
                                     ->badge()
                                     ->formatStateUsing(function () {
@@ -302,66 +303,134 @@ class StockManagement extends Page
                             ])
                             ->compact(),
 
-                            Section::make('Outstanding paid N' . number_format(
+                        Section::make('Outstanding paid N' . number_format(
+                            Payment::whereNotIn('order_id', Order::failed_order())
+                                ->whereNotIn('order_id', Order::staff_order())
+                                ->whereNotIn('order_id', Order::glovo_order())
+                                ->whereNotIn('order_id', Order::chowdeck_order())
+                                ->whereNotIn('order_id', Order::order_date())
+                                ->whereDate('created_at', today())
+                                ->sum('paid'),
+                            2
+                        ))
+                            ->description('Debts paid today')
+                            ->columns(5)
+                            ->schema([
+                                TextEntry::make('Cash')
+                                    ->default(0)
+                                    ->badge()
+                                    ->money('NGN')
+
+                                    ->formatStateUsing(function () {
+                                        $sum_paid = Payment::where('payment_method_id', 1)
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereNotIn('order_id', Order::order_date())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
+                                        return number_format($sum_paid, 2);
+                                    }),
+
+                                TextEntry::make('Transfer')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_paid = Payment::where('payment_method_id', 2)
+                                            ->whereNotIn('order_id', Order::order_date())
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
+                                        return number_format($sum_paid, 2);
+                                    }),
+                                TextEntry::make('ATM wthd.')
+                                    ->default(0)
+                                    ->badge()
+                                    ->formatStateUsing(function () {
+                                        $sum_paid = Payment::where('payment_method_id', 3)
+                                            ->whereNotIn('order_id', Order::order_date())
+                                            ->whereNotIn('order_id', Order::failed_order())
+                                            ->whereNotIn('order_id', Order::staff_order())
+                                            ->whereNotIn('order_id', Order::glovo_order())
+                                            ->whereNotIn('order_id', Order::chowdeck_order())
+                                            ->whereDate('created_at', now())
+                                            ->sum('paid');
+                                        return number_format($sum_paid, 2);
+                                    })
+                            ])
+                            ->collapsed(),
+                        Section::make('Unpaid debt N' . number_format(
+                            (OrderItem::whereNotIn('order_id', Order::failed_order())
+                                ->whereNotIn('order_id', Order::staff_order())
+                                ->whereNotIn('order_id', Order::glovo_order())
+                                ->whereNotIn('order_id', Order::chowdeck_order())
+                                ->whereNotIn('order_id', Order::full_payment())
+                                ->sum('price')
+
+                                -
+
                                 Payment::whereNotIn('order_id', Order::failed_order())
-                                                ->whereNotIn('order_id', Order::staff_order())
-                                                ->whereNotIn('order_id', Order::glovo_order())
-                                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                                ->whereNotIn('order_id', Order::order_date())
-                                                ->whereDate('created_at', today())
-                                                ->sum('paid'),
-                                2
-                            ))
-                                ->description('Debts paid today')
-                                ->columns(5)
-                                ->schema([
-                                    TextEntry::make('Cash')
-                                        ->default(0)
-                                        ->badge()
-                                        ->money('NGN')
-    
-                                        ->formatStateUsing(function () {
-                                            $sum_paid = Payment::where('payment_method_id', 1)
-                                                ->whereNotIn('order_id', Order::failed_order())
-                                                ->whereNotIn('order_id', Order::staff_order())
-                                                ->whereNotIn('order_id', Order::glovo_order())
-                                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                                ->whereNotIn('order_id', Order::order_date())
-                                                ->whereDate('created_at', now())
-                                                ->sum('paid');
-                                            return number_format($sum_paid, 2);
-                                        }),
-    
-                                    TextEntry::make('Transfer')
-                                        ->default(0)
-                                        ->badge()
-                                        ->formatStateUsing(function () {
-                                            $sum_paid = Payment::where('payment_method_id', 2)
-                                                ->whereNotIn('order_id', Order::order_date())
-                                                ->whereNotIn('order_id', Order::failed_order())
-                                                ->whereNotIn('order_id', Order::staff_order())
-                                                ->whereNotIn('order_id', Order::glovo_order())
-                                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                                ->whereDate('created_at', now())
-                                                ->sum('paid');
-                                            return number_format($sum_paid, 2);
-                                        }),
-                                    TextEntry::make('ATM wthd.')
-                                        ->default(0)
-                                        ->badge()
-                                        ->formatStateUsing(function () {
-                                            $sum_paid = Payment::where('payment_method_id', 3)
-                                                ->whereNotIn('order_id', Order::order_date())
-                                                ->whereNotIn('order_id', Order::failed_order())
-                                                ->whereNotIn('order_id', Order::staff_order())
-                                                ->whereNotIn('order_id', Order::glovo_order())
-                                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                                ->whereDate('created_at', now())
-                                                ->sum('paid');
-                                            return number_format($sum_paid, 2);
-                                        })
-                                ])
-                                ->collapsed(),
+                                ->whereNotIn('order_id', Order::staff_order())
+                                ->whereNotIn('order_id', Order::glovo_order())
+                                ->whereNotIn('order_id', Order::chowdeck_order())
+                                ->whereIn('order_id', Order::partial_payment())
+                                ->sum('paid')
+                            ),
+                            2
+                        ))
+                            ->description('Overall unpaid amount')
+                            ->columns(5)
+                            ->schema([
+                                TextEntry::make('Cash')
+                                    ->default(0)
+                                    ->badge()
+                                    ->state(function () {
+                                        $oweing_customer = Order::oweing_customer();
+
+                                        $unpaid_list = [];
+
+                                        // Loop through each item associated with the record
+                                        foreach ($oweing_customer as $customer) {
+                                            if (!empty($customer)) {
+                                                $customerName = Customer::find($customer)->name;
+
+                                                // Get the quantity for the current item
+                                                $unpaid_amount = number_format(Order::unpaid_amount($customer), 2);
+
+                                                // Concatenate the product name and quantity
+                                                $unpaid_list[] = "$customerName" . " - " . "$unpaid_amount";
+                                            } else {
+                                                $unpaid_amount = OrderItem::whereNotIn('order_id', Order::failed_order())
+                                                    ->whereNotIn('order_id', Order::staff_order())
+                                                    ->whereNotIn('order_id', Order::glovo_order())
+                                                    ->whereNotIn('order_id', Order::chowdeck_order())
+                                                    ->whereNotIn('order_id', Order::full_payment())
+                                                    ->whereHas('order', function ($query) {
+                                                        $query->whereNull('customer_id');
+                                                    })->sum('price');
+
+                                                $partial = Payment::whereNotIn('order_id', Order::failed_order())
+                                                    ->whereNotIn('order_id', Order::staff_order())
+                                                    ->whereNotIn('order_id', Order::glovo_order())
+                                                    ->whereNotIn('order_id', Order::chowdeck_order())
+                                                    ->whereIn('order_id', Order::partial_payment())
+                                                    ->whereHas('order', function ($query) {
+                                                        $query->whereNull('customer_id');
+                                                    })
+                                                    ->sum('paid');
+
+                                                $unpaid_list[] = "Others" . " - " . number_format($unpaid_amount - $partial, 2);
+                                            }
+                                        }
+
+                                        return $unpaid_list;
+                                    })
+                            ])
+                            ->collapsed(),
                     ]),
 
             ])->columns(1);
