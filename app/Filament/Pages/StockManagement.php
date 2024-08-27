@@ -363,74 +363,74 @@ class StockManagement extends Page
                                     })
                             ])
                             ->collapsed(),
-                        Section::make('Unpaid debt N' . number_format(
-                            (OrderItem::whereNotIn('order_id', Order::failed_order())
-                                ->whereNotIn('order_id', Order::staff_order())
-                                ->whereNotIn('order_id', Order::glovo_order())
-                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                ->whereNotIn('order_id', Order::full_payment())
-                                ->sum('price')
+                        // Section::make('Unpaid debt N' . number_format(
+                        //     (OrderItem::whereNotIn('order_id', Order::failed_order())
+                        //         ->whereNotIn('order_id', Order::staff_order())
+                        //         ->whereNotIn('order_id', Order::glovo_order())
+                        //         ->whereNotIn('order_id', Order::chowdeck_order())
+                        //         ->whereNotIn('order_id', Order::full_payment())
+                        //         ->sum('price')
 
-                                -
+                        //         -
 
-                                Payment::whereNotIn('order_id', Order::failed_order())
-                                ->whereNotIn('order_id', Order::staff_order())
-                                ->whereNotIn('order_id', Order::glovo_order())
-                                ->whereNotIn('order_id', Order::chowdeck_order())
-                                ->whereIn('order_id', Order::partial_payment())
-                                ->sum('paid')
-                            ),
-                            2
-                        ))
-                            ->description('Overall unpaid amount')
-                            ->columns(5)
-                            ->schema([
-                                TextEntry::make('Cash')
-                                    ->default(0)
-                                    ->badge()
-                                    ->state(function () {
-                                        $oweing_customer = Order::oweing_customer();
+                        //         Payment::whereNotIn('order_id', Order::failed_order())
+                        //         ->whereNotIn('order_id', Order::staff_order())
+                        //         ->whereNotIn('order_id', Order::glovo_order())
+                        //         ->whereNotIn('order_id', Order::chowdeck_order())
+                        //         ->whereIn('order_id', Order::partial_payment())
+                        //         ->sum('paid')
+                        //     ),
+                        //     2
+                        // ))
+                        //     ->description('Overall unpaid amount')
+                        //     ->columns(5)
+                        //     ->schema([
+                        //         TextEntry::make('Cash')
+                        //             ->default(0)
+                        //             ->badge()
+                        //             ->state(function () {
+                        //                 $oweing_customer = Order::oweing_customer();
 
-                                        $unpaid_list = [];
+                        //                 $unpaid_list = [];
 
-                                        // Loop through each item associated with the record
-                                        foreach ($oweing_customer as $customer) {
-                                            if (!empty($customer)) {
-                                                $customerName = Customer::find($customer)->name;
+                        //                 // Loop through each item associated with the record
+                        //                 foreach ($oweing_customer as $customer) {
+                        //                     if (!empty($customer)) {
+                        //                         $customerName = Customer::find($customer)->name;
 
-                                                // Get the quantity for the current item
-                                                $unpaid_amount = number_format(Order::unpaid_amount($customer), 2);
+                        //                         // Get the quantity for the current item
+                        //                         $unpaid_amount = number_format(Order::unpaid_amount($customer), 2);
 
-                                                // Concatenate the product name and quantity
-                                                $unpaid_list[] = "$customerName" . " - " . "$unpaid_amount";
-                                            } else {
-                                                $unpaid_amount = OrderItem::whereNotIn('order_id', Order::failed_order())
-                                                    ->whereNotIn('order_id', Order::staff_order())
-                                                    ->whereNotIn('order_id', Order::glovo_order())
-                                                    ->whereNotIn('order_id', Order::chowdeck_order())
-                                                    ->whereNotIn('order_id', Order::full_payment())
-                                                    ->whereHas('order', function ($query) {
-                                                        $query->whereNull('customer_id');
-                                                    })->sum('price');
+                        //                         // Concatenate the product name and quantity
+                        //                         $unpaid_list[] = "$customerName" . " - " . "$unpaid_amount";
+                        //                     } else {
+                        //                         $unpaid_amount = OrderItem::whereNotIn('order_id', Order::failed_order())
+                        //                             ->whereNotIn('order_id', Order::staff_order())
+                        //                             ->whereNotIn('order_id', Order::glovo_order())
+                        //                             ->whereNotIn('order_id', Order::chowdeck_order())
+                        //                             ->whereNotIn('order_id', Order::full_payment())
+                        //                             ->whereHas('order', function ($query) {
+                        //                                 $query->whereNull('customer_id');
+                        //                             })->sum('price');
 
-                                                $partial = Payment::whereNotIn('order_id', Order::failed_order())
-                                                    ->whereNotIn('order_id', Order::staff_order())
-                                                    ->whereNotIn('order_id', Order::glovo_order())
-                                                    ->whereNotIn('order_id', Order::chowdeck_order())
-                                                    ->whereIn('order_id', Order::partial_payment())
-                                                    ->whereHas('order', function ($query) {
-                                                        $query->whereNull('customer_id');
-                                                    })
-                                                    ->sum('paid');
+                        //                         $partial = Payment::whereNotIn('order_id', Order::failed_order())
+                        //                             ->whereNotIn('order_id', Order::staff_order())
+                        //                             ->whereNotIn('order_id', Order::glovo_order())
+                        //                             ->whereNotIn('order_id', Order::chowdeck_order())
+                        //                             ->whereIn('order_id', Order::partial_payment())
+                        //                             ->whereHas('order', function ($query) {
+                        //                                 $query->whereNull('customer_id');
+                        //                             })
+                        //                             ->sum('paid');
 
-                                                $unpaid_list[] = "Others" . " - " . number_format($unpaid_amount - $partial, 2);
-                                            }
-                                        }
+                        //                         $unpaid_list[] = "Others" . " - " . number_format($unpaid_amount - $partial, 2);
+                        //                     }
+                        //                 }
 
-                                        return $unpaid_list;
-                                    })
-                            ])
-                            ->collapsed(),
+                        //                 return $unpaid_list;
+                        //             })
+                        //     ])
+                        //     ->collapsed(),
                     ]),
 
             ])->columns(1);
