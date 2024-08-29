@@ -75,14 +75,16 @@ class Order extends Model
         return 'Walk-in Customer';
     }
 
-    public static function oweing_customer(){
-        return self::whereNotIn('id', self::full_payment())->pluck('customer_id','customer_id');
+    public static function oweing_customer()
+    {
+        return self::whereNotIn('id', self::full_payment())->pluck('customer_id', 'customer_id');
     }
 
-    public static function orderId_oweing_customer(int $id){
+    public static function orderId_oweing_customer(int $id)
+    {
         return self::where('customer_id', $id)
-        ->whereNotIn('id', self::full_payment())
-        ->pluck('id','id');
+            ->whereNotIn('id', self::full_payment())
+            ->pluck('id', 'id');
     }
 
     public static function unpaid_amount(int $id)
@@ -102,51 +104,57 @@ class Order extends Model
             ->whereIn('order_id', self::orderId_oweing_customer($id))
             ->sum('paid');
         return $order_amount - $partial_payment;
-    
     }
 
-    public static function failed_order($date = null){
-        if($date){
+    public static function failed_order($startDate = null, $endDate = null)
+    {
+        if ($startDate && $endDate) {
             return self::where('status', 0)
-            ->whereDate('created_at', $date)->pluck('id','id');    
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)->pluck('id', 'id');
         }
-        
-        return self::where('status', 0)->pluck('id','id');
+
+        return self::where('status', 0)->pluck('id', 'id');
     }
 
-    public static function staff_order($date = null){
-        if($date){
+    public static function staff_order($date = null)
+    {
+        if ($date) {
             return self::where('channel_id', 6)
-            ->whereDate('created_at', $date)->pluck('id','id');    
+                ->whereDate('created_at', $date)->pluck('id', 'id');
         }
-        
-        return self::where('channel_id', 6)->pluck('id','id');
+
+        return self::where('channel_id', 6)->pluck('id', 'id');
     }
 
-    public static function order_date($date = null){
-        if($date){
-            return self::whereDate('created_at', $date)->pluck('id','id');    
+    public static function order_date($startDate, $endDate)
+    {
+        if ($startDate && $endDate) {
+            return self::whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)->pluck('id', 'id');
         }
-        
-        return self::whereDate('created_at', today())->pluck('id','id');
+
+        return self::whereDate('created_at', today())->pluck('id', 'id');
     }
 
-    public static function glovo_order($date = null){
-        if($date){
+    public static function glovo_order($date = null)
+    {
+        if ($date) {
             return self::where('channel_id', 1)
-            ->whereDate('created_at', $date)->pluck('id','id');    
+                ->whereDate('created_at', $date)->pluck('id', 'id');
         }
-        
-        return self::where('channel_id', 1)->pluck('id','id');
+
+        return self::where('channel_id', 1)->pluck('id', 'id');
     }
 
-    public static function chowdeck_order($date = null){
-        if($date){
+    public static function chowdeck_order($date = null)
+    {
+        if ($date) {
             return self::where('channel_id', 3)
-            ->whereDate('created_at', $date)->pluck('id','id');    
+                ->whereDate('created_at', $date)->pluck('id', 'id');
         }
-        
-        return self::where('channel_id', 3)->pluck('id','id');
+
+        return self::where('channel_id', 3)->pluck('id', 'id');
     }
 
     public static function partial_payment()

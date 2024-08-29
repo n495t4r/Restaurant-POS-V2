@@ -5,14 +5,16 @@ namespace App\Filament\Widgets;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-
+use Illuminate\Database\Eloquent\Builder;
 
 class StatsOverview extends BaseWidget
 {
-        use HasWidgetShield;
+    use HasWidgetShield, InteractsWithPageFilters;
 
     protected static ?int $sort = 1;
 
@@ -21,20 +23,35 @@ class StatsOverview extends BaseWidget
 
     protected function getStats(): array
     {
+
+
+        $startDate = $this->filters['startDate'] ?? today();
+        $endDate = $this->filters['endDate'] ?? today();
+
         return [
-            Stat::make('Income', 'N '.OrderItem::totalIncome($this->filter))
-            ->description('N'.OrderItem::totalfailed($this->filter).' failed orders')
-            ->descriptionIcon('heroicon-m-arrow-trending-down')
-            ->color('danger'),
-            Stat::make('Expense', 'N '.Expense::totalExpense($this->filter))
-            ->description('N'.Expense::totalOperationalExpense($this->filter).' Operational Expenses')
-            ->color('danger'),
-            Stat::make('Capital Expense', 'N '.Expense::totalCapitalExpense($this->filter))
-            ->chart([7, 2, 10, 3, 15, 4, 17])
-            ->color('secondary'),
-            Stat::make('Net Income', 'N ' . (floatval(OrderItem::totalIncome($this->filter)) - floatval(Expense::totalOperationalExpense($this->filter))))
-            ->chart([7, 2, 10, 3, 15, 4, 17])
-            ->color('secondary')
+            Stat::make(
+                label: 'Revenue',
+                value: 'N ' .number_format(OrderItem::query()
+                    ->when($startDate, fn(Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+                    ->when($endDate, fn(Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+                    ->whereNotIn('order_id', Order::failed_order())
+                    ->sum('price'),2)
+            )
+                ->description('Inclusive of N' . number_format(Payment::unpaid_amount($startDate, $endDate),2) . ' unpaid')
+                ->descriptionIcon('heroicon-m-arrow-trending-down')
+                ->color('danger'),
+
+            Stat::make('Expense', 'N ' .number_format(Expense::totalExpense($startDate, $endDate),2))
+                ->description('N' . Expense::totalOperationalExpense($startDate, $endDate) . ' Operational Expenses')
+                ->color('danger'),
+
+            Stat::make('Capital Expense', 'N ' . Expense::totalCapitalExpense($startDate, $endDate))
+                ->chart([7, 2, 10, 3, 15, 4, 17])
+                ->color('secondary'),
+
+            Stat::make('Net Income', 'N ' . (floatval(OrderItem::totalIncome($startDate, $endDate)) - floatval(Expense::totalOperationalExpense($startDate, $endDate))))
+                ->chart([7, 2, 10, 3, 15, 4, 17])
+                ->color('secondary')
         ];
     }
 }

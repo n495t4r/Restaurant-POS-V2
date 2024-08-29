@@ -67,20 +67,18 @@ class Expense extends Model
      * @param string $date eg. 'today', 'yesterday'
      * @return float
      */
-    public static function sum_by_method(int $payment_method_id = 0, string $date = 'today'): float
+    public static function sum_by_method(int $payment_method_id = 0, $startDate, $endDate): float
     {
-        if ($date == 'yesterday') {
-            $date = now();
-        } else {
-            $date = now();
-        }
+       
         //return sum of all expenses today
         if ($payment_method_id == 0) {
-            return self::whereDate('created_at', $date)
+            return self::whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
                 ->sum('amount');
         }
         return self::where('payment_method_id', $payment_method_id)
-            ->whereDate('created_at', $date)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
             ->sum('amount');
     }
 
@@ -109,56 +107,22 @@ class Expense extends Model
         return $query->sum('amount');
     }
 
-    public static function totalExpense($filter = 'month')
+    public static function totalExpense($startDate, $endDate)
     {
-        $query = self::query();
+        $expense_amount = self::whereDate('date', '>=', $startDate)
+        ->whereDate('date', '<=', $endDate)
+        ->sum('amount');
 
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('date', today());
-                break;
-            case 'week':
-                $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereYear('date', now()->year)
-                    ->whereMonth('date', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('date', now()->year);
-                break;
-            default:
-                // No filter, retrieve total income without time filtering
-        }
-
-        $totalExpense = $query->sum('amount');
-
-        return number_format($totalExpense, 2);
+        return $expense_amount;
     }
 
-    public static function totalOperationalExpense($filter)
+    public static function totalOperationalExpense($startDate, $endDate)
     {
         $query = self::whereHas('category', function ($query) {
             $query->where('name', 'not like', '%Capital%');
         });
 
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('date', today());
-                break;
-            case 'week':
-                $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereYear('date', now()->year)
-                    ->whereMonth('date', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('date', now()->year);
-                break;
-            default:
-                // No filter, retrieve total income without time filtering
-        }
+        
 
         $totalExpense = $query->sum('amount');
         return number_format($totalExpense, 2);

@@ -30,7 +30,7 @@ class Payment extends Model
         return $this->belongsTo(Order::class, 'order_id');
     }
 
-      /**
+    /**
      * Find the paid sum for a specified date. Default param will return sum of all payments today
      *
      * @param int $payment_method_id
@@ -42,15 +42,15 @@ class Payment extends Model
      */
     public static function sum_by_method(int $payment_method_id = 0, string $date = 'today'): float
     {
-        if ($date == 'yesterday'){
+        if ($date == 'yesterday') {
             $date = now();
-        }else{
+        } else {
             $date = now();
         }
         //return sum of all payments today
-        if($payment_method_id == 0){
+        if ($payment_method_id == 0) {
             return self::whereDate('created_at', $date)
-            ->sum('paid');
+                ->sum('paid');
         }
         return self::where('payment_method_id', $payment_method_id)
             ->whereDate('created_at', $date)
@@ -70,5 +70,29 @@ class Payment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public static function unpaid_amount($startDate, $endDate)
+    {
+
+        $amount = OrderItem::whereNotIn('order_id', Order::failed_order())
+            ->whereNotIn('order_id', Order::staff_order())
+            ->whereNotIn('order_id', Order::glovo_order())
+            ->whereNotIn('order_id', Order::chowdeck_order())
+            ->whereNotIn('order_id', Order::full_payment())
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->sum('price');
+
+        $partial =  self::whereNotIn('order_id', Order::failed_order())
+            ->whereNotIn('order_id', Order::staff_order())
+            ->whereNotIn('order_id', Order::glovo_order())
+            ->whereNotIn('order_id', Order::chowdeck_order())
+            ->whereIn('order_id', Order::partial_payment())
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->sum('paid');
+
+        return $amount - $partial;
     }
 }
