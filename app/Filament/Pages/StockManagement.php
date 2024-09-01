@@ -411,7 +411,7 @@ class StockManagement extends Page
                             ->description('Debts paid on ' . $this->filter_range($startDate, $endDate))
                             ->columns(5)
                             ->schema([
-                                TextEntry::make('List')
+                                TextEntry::make('Cash')
                                     ->default(0)
                                     ->badge()
                                     ->money('NGN')
@@ -496,7 +496,7 @@ class StockManagement extends Page
                             ->description('Overall unpaid amount')
                             ->columns(5)
                             ->schema([
-                                TextEntry::make('Cash')
+                                TextEntry::make('List')
                                     ->default(0)
                                     ->badge()
                                     ->state(function () {

@@ -39,46 +39,42 @@ class PaymentResource extends Resource
             ->whereNot('status', 0)->get();
 
         return $form
+        ->columns(1)
             ->schema([
                 Split::make([
                     Grid::make(1)
-                        ->columnSpanFull()
+                        ->columnSpan(2)
                         ->schema([
                             Forms\Components\Select::make('order_id')
                                 ->label('Unpaid orders')
+                                ->searchable()
+                                ->columnSpan(2)
+
+                                ->preload()
                                 // ->relationship('order', 'id')
                                 ->options(
                                     function () {
 
-                                        return Order::whereNotIn('id', Order::full_payment())
-                                            ->whereNot('status', 0)
-                                            ->orderBy('id', 'desc')
-                                            ->pluck('id', 'id');
+                                        $orders = Order::whereNotIn('id', Order::full_payment())
+                                        ->whereNotIn('id', Order::failed_order())
+                                        ->whereNotIn('id', Order::staff_order())
+                                        ->whereNotIn('id', Order::glovo_order())
+                                        ->whereNotIn('id', Order::chowdeck_order())
+                                        ->orderBy('id', 'desc')
+                                        ->get();
+                                        $f_string = [];
 
-                                    // $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
-                                    //     ->whereNot('status', 0)->get();
+                                        foreach ($orders as $order) {
+                                            $customerName = $order->customer ? $order->customer->name : 'Unselected';
+                                            $timeAgo = Carbon::parse($order->created_at)->diffForHumans();
+                                            
+                                            $f_string[$order->id] = $order->id . ' (' .$customerName . ') ' . $timeAgo;
+                                        }
 
-                                    // $unpaid_orders->mapWithKeys(function (Order $order) {
-                                    //     return [$order->id => sprintf('%s | N%s | %s', $product->name, $product->price, $product->quantity)];
-                                    // })
+                                        return $f_string;
                                     }
 
-
-
                                 )
-
-
-                                // ->formatStateUsing(function ($state) {
-                                //     $unpaid_orders = Order::whereNotIn('id', Order::full_payment())
-                                //         ->whereNot('status', 0)->get();
-                                //     dd($unpaid_orders);
-                                //     // $products2 = [];
-                                //     // foreach ($products as $product) {
-                                //     $formattedString = $unpaid_orders->id . '|' . $unpaid_orders->created_at . ' | N' . $unpaid_orders->items->sum('price') . ' | ';
-                                //     // $products2[$product->id] = $formattedString;
-                                //     // }
-                                //     return $formattedString;
-                                // })
                                 ->live()
                                 ->afterStateUpdated(function (Set $set, $state) {
                                     // dd($state);
@@ -108,10 +104,11 @@ class PaymentResource extends Resource
                                 ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
                                 ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
                                 ->minValue(50)
+                                ->step(50)
                                 ->numeric(),
                         ]),
-                    Grid::make(1)
-                        ->columnSpanFull()
+                    Grid::make()
+                        // ->columnSpanFull()
 
                         ->grow(false)
                         ->schema([

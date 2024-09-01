@@ -24,6 +24,19 @@ class StockHistory extends Model
         return $this->belongsToMany(Product::class, 'closing_stock', 'product_id', 'closing_qty');
     }
 
+    public function getStockForProduct($productId, $stockType)
+    {
+        return $this->closing_stock[$stockType][$productId] ?? null;
+    }
+
+    public function setStockForProduct($productId, $stockType, $quantity)
+    {
+        if (!isset($this->closing_stock[$stockType])) {
+            $this->closing_stock[$stockType] = [];
+        }
+        $this->closing_stock[$stockType][$productId] = $quantity;
+    }
+    
     public static function getPreviousDayRecords()
     {
         // $yesterday = Carbon::yesterday()->format('Y-m-d');

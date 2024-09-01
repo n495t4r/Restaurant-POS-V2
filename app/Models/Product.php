@@ -25,6 +25,11 @@ class Product extends Model
         'status' => 'boolean',
     ];
 
+    public function storeStock()
+    {
+        return $this->hasOne(StoreStock::class);
+    }
+
     public function stockHistories()
     {
         return $this->hasMany(StockHistory::class);
