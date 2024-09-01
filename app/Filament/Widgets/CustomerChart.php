@@ -12,7 +12,7 @@ class CustomerChart extends ChartWidget
 {
     use HasWidgetShield;
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 8;
 
     protected static ?string $heading = 'Customer Income';
 

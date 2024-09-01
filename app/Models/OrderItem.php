@@ -40,33 +40,18 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public static function totalIncome($filter)
+    public static function totalIncome($startDate, $endDate)
     {
         $query = self::whereHas('order', function ($query) {
             $query->where('status', '!=', 'failed');
         });
     
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('created_at', today());
-                break;
-            case 'week':
-                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereYear('created_at', now()->year)
-                      ->whereMonth('created_at', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('created_at', now()->year);
-                break;
-            default:
-                // No filter, retrieve total income without time filtering
-        }
-    
-        $totalIncome = $query->sum('price');
-    
-        return number_format($totalIncome, 2);
+        $totalIncome = self::whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->whereNotIn('order_id', Order::failed_order())
+        ->sum('price');
+        
+        return $totalIncome;
 
     }
     

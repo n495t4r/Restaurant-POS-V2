@@ -84,15 +84,35 @@ class Payment extends Model
             ->whereDate('created_at', '<=', $endDate)
             ->sum('price');
 
-        $partial =  self::whereNotIn('order_id', Order::failed_order())
+            $orders_of_interest = OrderItem::whereNotIn('order_id', Order::failed_order())
             ->whereNotIn('order_id', Order::staff_order())
             ->whereNotIn('order_id', Order::glovo_order())
             ->whereNotIn('order_id', Order::chowdeck_order())
-            ->whereIn('order_id', Order::partial_payment())
+            ->whereNotIn('order_id', Order::full_payment())
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
+            ->pluck('order_id', 'order_id');
+
+        $partial =  self::whereIn('order_id', $orders_of_interest)
+            // ->whereIn('order_id', Order::partial_payment())
+            // ->whereDate('created_at', '>=', $startDate)
+            // ->whereDate('created_at', '<=', $endDate)
             ->sum('paid');
 
-        return $amount - $partial;
+        return floatval($amount) - floatval($partial);
+    }
+
+    public static function staff_amount($startDate, $endDate)
+    {
+
+        $amount = OrderItem::whereNotIn('order_id', Order::failed_order())
+            ->whereIn('order_id', Order::staff_order())
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->sum('price');
+
+           
+
+        return floatval($amount);
     }
 }

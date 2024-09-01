@@ -32,7 +32,7 @@ class Expense extends Model
             }
         });
     }
-    
+
     protected $casts = [
         'date' => 'date', // Ensures the 'date' attribute is cast to a date type
     ];
@@ -69,49 +69,24 @@ class Expense extends Model
      */
     public static function sum_by_method(int $payment_method_id = 0, $startDate, $endDate): float
     {
-       
+
         //return sum of all expenses today
         if ($payment_method_id == 0) {
             return self::whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+                ->whereDate('created_at', '<=', $endDate)
                 ->sum('amount');
         }
         return self::where('payment_method_id', $payment_method_id)
-        ->whereDate('created_at', '>=', $startDate)
-        ->whereDate('created_at', '<=', $endDate)
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
             ->sum('amount');
-    }
-
-    public static function totalExpense2($categoryId, $filter)
-    {
-        $query = self::where('category_id', $categoryId);
-
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('created_at', today());
-                break;
-            case 'week':
-                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('created_at', now()->year);
-                break;
-            default:
-                // No filter, return total expense for all time
-        }
-
-        return $query->sum('amount');
     }
 
     public static function totalExpense($startDate, $endDate)
     {
         $expense_amount = self::whereDate('date', '>=', $startDate)
-        ->whereDate('date', '<=', $endDate)
-        ->sum('amount');
+            ->whereDate('date', '<=', $endDate)
+            ->sum('amount');
 
         return $expense_amount;
     }
@@ -122,37 +97,27 @@ class Expense extends Model
             $query->where('name', 'not like', '%Capital%');
         });
 
-        
+        $totalExpense = $query->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->sum('amount');
 
-        $totalExpense = $query->sum('amount');
+        // $totalExpense = $query->sum('amount');
         return number_format($totalExpense, 2);
     }
 
-    public static function totalCapitalExpense($filter)
+    public static function totalCapitalExpense($startDate, $endDate)
     {
         $query = self::whereHas('category', function ($query) {
             $query->where('name', 'like', '%Capital%');
         });
 
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('date', today());
-                break;
-            case 'week':
-                $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereYear('date', now()->year)
-                    ->whereMonth('date', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('date', now()->year);
-                break;
-            default:
-                // No filter, retrieve total income without time filtering
-        }
 
-        $totalExpense = $query->sum('amount');
+        $totalExpense = $query->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->sum('amount');
+
+
+        // $totalExpense = $query->sum('amount');
         return number_format($totalExpense, 2);
     }
 
