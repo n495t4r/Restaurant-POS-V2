@@ -14,10 +14,10 @@ class ExpenseImporter extends Importer
     public static function getColumns(): array
     {
         return [
-            ImportColumn::make('id')
-                ->requiredMapping()
-                ->numeric()
-                ->rules(['required', 'integer']),
+            // ImportColumn::make('id')
+            //     ->requiredMapping()
+            //     ->numeric()
+            //     ->rules(['required', 'integer']),
             ImportColumn::make('category_id')
                 ->requiredMapping()
                 ->numeric()
@@ -32,6 +32,10 @@ class ExpenseImporter extends Importer
                 ->relationship()
                 ->rules(['required']),
             ImportColumn::make('amount')
+                ->requiredMapping()
+                ->numeric()
+                ->rules(['required', 'integer']),
+            ImportColumn::make('payment_method_id')
                 ->requiredMapping()
                 ->numeric()
                 ->rules(['required', 'integer']),

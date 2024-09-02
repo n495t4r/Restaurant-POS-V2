@@ -20,6 +20,8 @@ class ManageOrders extends ManageRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
                     ->importer(OrderImporter::class),
             ExportAction::make()
                 ->exporter(OrderExporter::class)

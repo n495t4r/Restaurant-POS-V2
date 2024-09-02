@@ -282,7 +282,10 @@ class OrderResource extends Resource
                 // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
                     // ->searchable()
-                    ->disabled(fn ($record) => $record->created_at->format('Y-m-d') != today()->format('Y-m-d') && auth()->id() != 2)
+                    ->disabled(
+                        fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') ||
+                            $record->channel_id == 6) && auth()->id() != 2
+                    )
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
                     ->options(function (): array {
@@ -298,7 +301,7 @@ class OrderResource extends Resource
                     // })
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
-                    ->disabled(fn ($record) => $record->created_at->format('Y-m-d') != today()->format('Y-m-d') && auth()->id() != 2)
+                    ->disabled(fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') || $record->channel_id === 6) && auth()->id() != 2)
                     ->label('Order channel')
                     ->options(function (): array {
                         return OrderChannel::all()->pluck('channel', 'id')->all();
@@ -592,15 +595,15 @@ class OrderResource extends Resource
                     })
             ])
             ->actions([
-                
+
                 Tables\Actions\Action::make('download')
-                ->label('Print')
-                ->icon('heroicon-m-printer')
-                ->iconButton()
-                ->url(
-                    fn (Order $record): string => route('print.invoice', ['id' => $record->id]),
-                    shouldOpenInNewTab: true
-                ),
+                    ->label('Print')
+                    ->icon('heroicon-m-printer')
+                    ->iconButton()
+                    ->url(
+                        fn(Order $record): string => route('print.invoice', ['id' => $record->id]),
+                        shouldOpenInNewTab: true
+                    ),
                 Tables\Actions\ViewAction::make()->iconButton(),
                 Tables\Actions\DeleteAction::make()->iconButton()
             ])

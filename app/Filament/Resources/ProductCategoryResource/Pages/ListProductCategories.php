@@ -21,6 +21,8 @@ class ListProductCategories extends ListRecords
             Actions\CreateAction::make(),
             ImportAction::make()
                 ->label('Import category')
+                ->visible(auth()->user()->hasRole('super_admin'))
+
                 ->importer(ProductCategoryImporter::class),
             ExportAction::make()
                 ->exporter(ProductCategoryExporter::class)

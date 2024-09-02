@@ -19,6 +19,8 @@ class ListCustomers extends ListRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
                 ->label('Import customer')
                 ->importer(CustomerImporter::class),
             ExportAction::make()

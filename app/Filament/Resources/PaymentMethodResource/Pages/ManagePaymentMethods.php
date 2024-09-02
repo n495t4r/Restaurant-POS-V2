@@ -20,6 +20,8 @@ class ManagePaymentMethods extends ManageRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
             ->importer(PaymentMethodImporter::class),
             ExportAction::make()
                 ->exporter(PaymentMethodExporter::class)

@@ -20,6 +20,8 @@ class ManageProducts extends ManageRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
                 ->importer(ProductImporter::class),
             ExportAction::make()
                 ->exporter(ProductExporter::class)

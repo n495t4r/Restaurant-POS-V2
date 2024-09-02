@@ -19,6 +19,8 @@ class ManageUsers extends ManageRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
                 ->importer(UserImporter::class),
             ExportAction::make()
                 ->exporter(UserExporter::class)

@@ -20,9 +20,11 @@ class ManageExpenses extends ManageRecords
         return [
             Actions\CreateAction::make(),
             ImportAction::make()
+                ->visible(auth()->user()->hasRole('super_admin'))
                 ->label('Import expense')
                 ->importer(ExpenseImporter::class),
             ExportAction::make()
+                ->visible(auth()->user()->hasRole('super_admin'))
                 ->exporter(ExpenseExporter::class)
                 ->label('Export expense')
                 ->formats([
@@ -32,10 +34,10 @@ class ManageExpenses extends ManageRecords
         ];
     }
 
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['user_id'] = auth()->id();
+    // protected function mutateFormDataBeforeCreate(array $data): array
+    // {
+    //     $data['user_id'] = auth()->id();
 
-        return $data;
-    }
+    //     return $data;
+    // }
 }

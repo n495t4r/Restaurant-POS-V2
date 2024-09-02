@@ -72,13 +72,13 @@ class Expense extends Model
 
         //return sum of all expenses today
         if ($payment_method_id == 0) {
-            return self::whereDate('created_at', '>=', $startDate)
-                ->whereDate('created_at', '<=', $endDate)
+            return self::whereDate('date', '>=', $startDate)
+                ->whereDate('date', '<=', $endDate)
                 ->sum('amount');
         }
         return self::where('payment_method_id', $payment_method_id)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
             ->sum('amount');
     }
 

@@ -27,9 +27,12 @@ class ManageOrderChannels extends ManageRecords
             ->successNotificationTitle('Order channel created'),
 
             ImportAction::make()
+            ->visible(auth()->user()->hasRole('super_admin'))
+
                 ->label('Import channel')
                 ->importer(OrderChannelImporter::class),
             ExportAction::make()
+            
                 ->exporter(OrderChannelExporter::class)
                 ->label('Export channel')
                 ->formats([

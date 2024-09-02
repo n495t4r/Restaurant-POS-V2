@@ -14,9 +14,11 @@ use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class ExpenseResource extends Resource
 {
@@ -42,6 +44,9 @@ class ExpenseResource extends Resource
                     ->numeric(),
                 Forms\Components\Select::make('payment_method_id')
                     ->relationship('payment_method', 'name')
+                    ->required(),
+                Forms\Components\Hidden::make('user_id')
+                    ->default(auth()->id())
                     ->required(),
                 Forms\Components\DatePicker::make('date')
                     ->default(now())
@@ -100,6 +105,9 @@ class ExpenseResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])->defaultSort('date', 'desc')
             ->filters([
+                SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->label('Category'),
                 Filter::make('date')
                     ->label('Expense date')
                     ->indicateUsing(function (array $data): array {
@@ -145,6 +153,21 @@ class ExpenseResource extends Resource
             ]);
     }
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->can('view_expense')) {
+            return $query;
+        }
+
+        return $query->where('user_id', auth()->id());
+
+    }
+
+    
     public static function getPages(): array
     {
         return [
