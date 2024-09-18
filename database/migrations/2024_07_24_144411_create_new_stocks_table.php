@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateNewStocksTable extends Migration
@@ -17,7 +18,7 @@ class CreateNewStocksTable extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->integer('quantity');
-            $table->date('supply_date')->default(now());
+            $table->date('supply_date')->default(DB::raw('CURRENT_DATE'));
             $table->timestamps();
         });
     }

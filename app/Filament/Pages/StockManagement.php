@@ -34,6 +34,8 @@ use Illuminate\Http\Request as HttpRequest;
 class StockManagement extends Page
 {
     // protected static ?string $navigationIcon = 'heroicon-o-clipboard-list';
+    protected static ?string $navigationIcon = 'heroicon-carbon-report';
+
     protected static string $view = 'filament.pages.stock-management';
     protected static ?string $title = 'EOD Report';
     // protected static ?string $navigationLabel = 'Stock Management';
