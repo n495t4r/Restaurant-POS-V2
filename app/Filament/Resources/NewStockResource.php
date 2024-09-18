@@ -36,7 +36,7 @@ class NewStockResource extends Resource
                 Forms\Components\DatePicker::make('supply_date')
                     ->default(now())
                     ->dehydrated(true)
-                    ->visible(fn() => auth()->id() != 2)  //control using permissions instead - change later auth()->user()->hasPermission('super_admin')
+                    ->visible(fn() => auth()->id() == 2)  //control using permissions instead - change later auth()->user()->hasPermission('super_admin')
                     ->required(),
             ]);
     }
