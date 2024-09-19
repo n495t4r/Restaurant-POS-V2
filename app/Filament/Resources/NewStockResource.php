@@ -17,7 +17,11 @@ class NewStockResource extends Resource
 {
     protected static ?string $model = NewStock::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    // protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-right-start-on-rectangle';
+
+    
 
     public static function form(Form $form): Form
     {
