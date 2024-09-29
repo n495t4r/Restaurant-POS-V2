@@ -19,11 +19,11 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::redirect('/', '/peva');
+// Route::redirect('/', '/peva');
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 
 
