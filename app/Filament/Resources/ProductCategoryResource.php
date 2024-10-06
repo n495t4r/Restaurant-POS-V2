@@ -20,7 +20,7 @@ class ProductCategoryResource extends Resource
     protected static ?string $model = ProductCategory::class;
 
     protected static ?string $navigationGroup = 'Manage';
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 

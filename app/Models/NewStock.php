@@ -9,6 +9,9 @@ class NewStock extends Model
     protected $fillable = [
         'product_id',
         'quantity',
+        'from',
+        'to',
+        'user_id',
         'supply_date',
     ];
 
@@ -19,5 +22,15 @@ class NewStock extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function product_category()
+    {
+        return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 }

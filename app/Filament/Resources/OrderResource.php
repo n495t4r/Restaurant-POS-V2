@@ -54,10 +54,11 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
-    // public static function form(Form $form): Form
-    // {
-    //     // return PostOrderResource::form($form);
-    // }
+    public static function form(Form $form): Form
+    {
+        // return PostOrderResource::form($form);
+        // return NewStockResource::form($form);
+    }
 
     public static function infolist(Infolist $infolist): Infolist
     {
@@ -281,7 +282,7 @@ class OrderResource extends Resource
 
                 // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
-                    // ->searchable()
+                    ->searchable()
                     ->disabled(
                         fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') ||
                             $record->channel_id == 6) && auth()->id() != 2
@@ -289,22 +290,44 @@ class OrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
                     ->options(function (): array {
-                        return Customer::all()->pluck('name', 'id')->all();
+                        return Customer::query()
+                        ->orderBy('name')
+                        ->get()
+                        ->mapWithKeys(function ($customer) {
+                            $label = $customer->name;
+                            if (!$customer->is_active) {
+                                $label .= ' (inactive)';
+                            }
+                            return [$customer->id => $label];
+                        })
+                        ->toArray();
+                    })
+                    ->disableOptionWhen(function (string $value, string $label): bool {
+                        $customer = Customer::find($value);
+                        return $customer && !$customer->is_active;
                     }),
                 Tables\Columns\SelectColumn::make('channel_id')
                     // ->searchable()
-                    // ->disabled(function($record){
-                    //     if($record->channel_id === 6){
-                    //         return true;
-                    //     }
-                    //     return false;
-                    // })
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
                     ->disabled(fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') || $record->channel_id === 6) && auth()->id() != 2)
                     ->label('Order channel')
                     ->options(function (): array {
-                        return OrderChannel::all()->pluck('channel', 'id')->all();
+                        return OrderChannel::query()
+                        ->orderBy('channel')
+                        ->get()
+                        ->mapWithKeys(function ($channel) {
+                            $label = $channel->channel;
+                            if (!$channel->is_active) {
+                                $label .= ' (inactive)';
+                            }
+                            return [$channel->id => $label];
+                        })
+                        ->toArray();
+                    })
+                    ->disableOptionWhen(function (string $value, string $label): bool {
+                        $channel = OrderChannel::find($value);
+                        return $channel && !$channel->is_active;
                     }),
                 Tables\Columns\TextColumn::make('items_sum_price')
                     ->sum('items', 'price')

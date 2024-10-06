@@ -16,6 +16,7 @@ class Product extends Model
         'image',
         'price',
         'quantity',
+        'store',
         'status',
         'product_category_id',
         'counter'
@@ -35,12 +36,12 @@ class Product extends Model
         return $this->hasMany(StockHistory::class);
     }
 
-    public function items() : HasMany
+    public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    public function newstock() : HasMany
+    public function newstock(): HasMany
     {
         return $this->hasMany(NewStock::class);
     }
@@ -68,23 +69,24 @@ class Product extends Model
         }
     }
 
-      /**
+    /**
      * Increase the product quantity.
      *
      * @param int $id
      * @param int $quantity
      * @return bool
      */
-    public static function increaseQuantity(int $id, int $quantity): bool
+    public static function increaseQuantity(int $id, int $quantity, bool $isStore = false): bool
     {
-        $product = self::find($id);
+        $product = self::findOrFail($id);  // Use findOrFail to throw an exception if the product is not found
 
-        if ($product) {
+        if ($isStore) {
+            $product->store += $quantity;
+        } else {
             $product->quantity += $quantity;
-            return $product->save();
         }
 
-        return false;
+        return $product->save();
     }
 
     /**
@@ -94,16 +96,22 @@ class Product extends Model
      * @param int $quantity
      * @return bool
      */
-    public static function decreaseQuantity(int $id, int $quantity): bool
+    public static function decreaseQuantity(int $id, int $quantity, bool $isStore = false): bool
     {
-        $product = self::find($id);
+        $product = self::findOrFail($id);  // Use findOrFail to throw an exception if the product is not found
 
-        if ($product && $product->quantity >= $quantity) {
-            $product->quantity -= $quantity;
-            return $product->save();
+        if ($isStore) {
+            if ($product->store >= $quantity) {
+                $product->store -= $quantity;
+                return $product->save();
+            }
+        } else {
+            if ($product->quantity >= $quantity) {
+                $product->quantity -= $quantity;
+                return $product->save();
+            }
         }
 
         return false;
     }
-
 }

@@ -36,28 +36,26 @@ class StockHistory extends Model
         }
         $this->closing_stock[$stockType][$productId] = $quantity;
     }
-    
+
     public static function getStockHistory($date = null)
-{
-    // If a $date is provided, subtract one day from it
-    if ($date) {
-        $closingDate = Carbon::parse($date)->subDay()->toDateString();
-    } else {
-        // If no date is provided, default to yesterday
-        $closingDate = Carbon::yesterday()->toDateString();
+    {
+        // If a $date is provided, subtract one day from it
+        if ($date) {
+            $closingDate = Carbon::parse($date)->subDay()->toDateString();
+        } else {
+            // If no date is provided, default to yesterday
+            $closingDate = Carbon::yesterday()->toDateString();
+        }
+
+        // Return the stock history for the calculated closing date
+        return self::whereDate('closing_date', '=', $closingDate)->first();
     }
 
-    // Return the stock history for the calculated closing date
-    return self::whereDate('closing_date', '=', $closingDate)->first();
-}
+    public static function getClosingStockHistory($date)
+    {
+        $closingDate = Carbon::parse($date)->toDateString();
 
-public static function getClosingStockHistory($date)
-{
-    $closingDate = Carbon::parse($date)->toDateString();
-
-    // Return the stock history for the calculated closing date
-    return self::whereDate('closing_date', '=', $closingDate)->first();
-}
-
-
+        // Return the stock history for the calculated closing date
+        return self::whereDate('closing_date', '=', $closingDate)->first();
+    }
 }

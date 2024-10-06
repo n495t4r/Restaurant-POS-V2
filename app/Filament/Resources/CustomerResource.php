@@ -17,7 +17,7 @@ class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
     protected static ?string $navigationGroup = 'Manage';
-    // protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
@@ -71,7 +71,7 @@ class CustomerResource extends Resource
                     Tables\Columns\IconColumn::make('is_active')
                     ->sortable()
                     ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('avatar')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),

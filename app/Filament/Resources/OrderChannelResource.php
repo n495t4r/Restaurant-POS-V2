@@ -18,7 +18,7 @@ class OrderChannelResource extends Resource
     protected static ?string $model = OrderChannel::class;
 
     protected static ?string $navigationGroup = 'Manage';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 

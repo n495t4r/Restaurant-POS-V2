@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\StockHistory;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -33,7 +34,6 @@ use Illuminate\Http\Request as HttpRequest;
 
 class StockManagement extends Page
 {
-    // protected static ?string $navigationIcon = 'heroicon-o-clipboard-list';
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';
 
     protected static string $view = 'filament.pages.stock-management';
@@ -44,10 +44,10 @@ class StockManagement extends Page
     public ?array $data = [];
 
     public $report;
-   
+
     public Order $order;
 
-    use HasFiltersAction, InteractsWithPageFilters;
+    use HasFiltersAction, InteractsWithPageFilters, HasPageShield;
 
 
     protected function getHeaderActions(): array
@@ -409,7 +409,7 @@ class StockManagement extends Page
                                 ->sum('paid'),
                             2
                         ))
-                        ->visible(fn() => $startDate == $endDate)
+                            ->visible(fn() => $startDate == $endDate)
                             ->description('Debts paid on ' . $this->filter_range($startDate, $endDate))
                             ->columns(5)
                             ->schema([
@@ -494,12 +494,13 @@ class StockManagement extends Page
                             ),
                             2
                         ))
-                            ->visible(fn() => auth()->id() == 2)
-                            ->description('Overall unpaid amount')
-                            ->columns(5)
+                            ->visible(auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('Manager'))
+                            // ->visible(fn() => auth()->id() == 2)
+                            ->description('Oweing customers')
+                            ->columns(4)
                             ->schema([
-                                TextEntry::make('List')
-                                    ->default(0)
+                                TextEntry::make('List of customers')
+                                    ->default(4)
                                     ->badge()
                                     ->state(function () {
                                         $oweing_customer = Order::oweing_customer();

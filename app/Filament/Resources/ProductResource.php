@@ -15,9 +15,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductResource extends Resource
 {
+    protected static ?string $navigationGroup = 'Manage';
     protected static ?string $model = Product::class;
     // protected static ?string $navigationGroup = 'Product';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -33,14 +34,25 @@ class ProductResource extends Resource
                 Forms\Components\FileUpload::make('image')
                     ->image(),
                 Forms\Components\TextInput::make('price')
+                ->helperText('Selling price per unit/portion')
                     ->required()
                     ->numeric()
+                    ->minValue(0)
                     ->prefix('NGN'),
                 Forms\Components\Select::make('product_category_id')
                     ->relationship('product_category', 'name')
                     ->required(),
                 Forms\Components\TextInput::make('quantity')
+                    ->label('Front quantity')
                     ->required()
+                    ->default(0)
+                    ->minValue(0)
+                    ->numeric(),
+                Forms\Components\TextInput::make('store')
+                    ->label('Store quantity')
+                    ->default(0)
+                    ->required()
+                    ->minValue(0)
                     ->numeric(),
                 Forms\Components\Toggle::make('status')
                     ->onColor('success')

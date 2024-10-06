@@ -4,9 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Models\Order;
 use App\Models\NewStock;
-use App\Models\StockHistory;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\StockHistory;
+use App\Models\StoreStock;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -23,19 +24,32 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
 
-class StockHistories extends Page implements HasTable
+class StoreStocks extends Page implements HasTable
 {
     use InteractsWithTable, InteractsWithPageFilters, HasPageShield;
 
+    // protected static bool $shouldRegisterNavigation = $auth()->user()->hasRole('super_admin');
+
     protected static ?string $navigationIcon = 'heroicon-c-square-3-stack-3d';
-    protected static string $view = 'filament.pages.stock-histories';    
-    protected static ?string $title = 'Front Stock';
-    protected static ?string $slug = 'stock-hst';
+    protected static string $view = 'filament.pages.store-stock';    
+    protected static ?string $title = 'Store Stock';
+    protected static ?string $slug = 'store-stock';
 
     public $filterData = [
         'startDate' => null,
         'endDate' => null,
     ];
+
+//     public static function shouldRegisterNavigation(): bool
+// {
+//     $user = auth()->user();
+    
+//     // Check if user has the required role(s)
+//     return $user->hasRole('super_admin') || $user->hasRole('Manager');
+    
+//     // Alternatively, if you want to check for multiple roles:
+//     // return $user->hasAnyRole(['super_admin', 'manager', 'cashier']);
+// }
 
     protected function getHeaderActions(): array
     {
@@ -51,86 +65,66 @@ class StockHistories extends Page implements HasTable
                 }),
 
             Action::make('closeStore')
-                ->label('Close cashier unit')
+                ->label('Close Store')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->disabled(fn () => $this->isCashierUnitClosed())
-                ->action( function () {$this->closeCashierUnit();}),
+                ->disabled(fn () => $this->isStoreClosedToday())
+                ->action(function () {
+                    try {
+                        if (!StockHistories::isCashierUnitClosed()){
+                            StockHistories::closeCashierUnit();
+                        }
+
+                        DB::transaction(function () {
+                            $products = Product::all();
+                            $closingStock = $products->map(function ($product) {
+                                return [
+                                    'product_id' => $product->id,
+                                    'closing_qty' => $product->store,
+                                ];
+                            })->toArray();
+
+                            $data['closing_date'] = now();
+                            $data['closing_stock'] = json_encode($closingStock);
+
+                    
+                            StoreStock::create($data);
+
+                            // Order::whereDate('created_at', today())
+                            //     ->whereNotIn('status', [0, 1])
+                            //     ->update(['status' => 1]);
+                        });
+
+
+                        Notification::make()
+                            ->title('Store closed successfully')
+                            ->success()
+                            ->duration(5000)
+                            ->send();
+
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+
+                        Notification::make()
+                            ->title('Error closing store: ' . $e->getMessage())
+                            ->color('danger')
+                            ->send();
+                    }
+                }),
         ];
     }
 
-    public static function closeCashierUnit() {
-        try {
-
-             // Check for unpaid orders
-             $unpaidOrders = Order::whereNotIn('id', Order::full_payment())
-             ->whereNotIn('id', Order::failed_order())
-             ->whereNotIn('id', Order::staff_order())
-             ->whereNotIn('id', Order::glovo_order())
-             ->whereNotIn('id', Order::chowdeck_order())
-             ->whereDate('created_at', today())
-             ->where(function ($query) {
-                $query->whereNull('customer_id')
-                      ->orWhere('customer_id', 14);
-            })
-             ->get();
-
-         if ($unpaidOrders->isNotEmpty()) {
-             Notification::make()
-                ->title('Please select customer names for unpaid orders before closing the store.')
-                ->color('warning')
-                ->send();
-             
-             return;
-         }
-
-            DB::transaction(function () {
-                $products = Product::all();
-                $closingStock = $products->map(function ($product) {
-                    return [
-                        'product_id' => $product->id,
-                        'closing_qty' => $product->quantity,
-                    ];
-                })->toArray();
-
-                $data['closing_date'] = now();
-                $data['closing_stock'] = json_encode($closingStock);
-
-        
-                StockHistory::create($data);
-
-                Order::whereDate('created_at', today())
-                    ->whereNotIn('status', [0, 1])
-                    ->update(['status' => 1]);
-            });
-
-
-            Notification::make()
-                ->title('Cashier unit closed successfully')
-                ->success()
-                ->duration(5000)
-                ->send();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Notification::make()
-                ->title('Error closing cashier unit: ' . $e->getMessage())
-                ->color('danger')
-                ->send();
-        }
-    }
-
-    public static function isCashierUnitClosed(): bool
+    protected function isStoreClosedToday(): bool
     {
-        return StockHistory::whereDate('closing_date', today())->exists();
+        return StoreStock::whereDate('closing_date', today())->exists();
     }
 
     public function table(Table $table): Table
     {
+
         return $table
+        ->striped()
             ->query(Product::query())
-            ->striped()
             ->columns([
                 // TextColumn::make('id')
                 //     ->label('Prod ID')
@@ -148,19 +142,14 @@ class StockHistories extends Page implements HasTable
                     ->toggleable(isToggledHiddenByDefault: false)
                     // ->sortable()
                     ->getStateUsing(fn($record) => $this->getOpeningStock($record)),
-                TextColumn::make('supply')
-                    ->label('Supply')
+                TextColumn::make('received')
+                    ->label('Received')
                     ->toggleable(isToggledHiddenByDefault: false)
                     // ->sortable()
                     ->getStateUsing(fn($record) => $this->getSupply($record)),
-                TextColumn::make('return')
-                    ->label('Return to store')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    // ->sortable()
-                    ->getStateUsing(fn($record) => $this->getReturn($record)),
-                TextColumn::make('items_sum_quantity')
-                ->sum('items', 'quantity')
-                    ->label('Sold')
+                TextColumn::make('newstock_sum_quantity')
+                ->sum('newstock', 'quantity')
+                    ->label('To front')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
                     ->getStateUsing(fn($record) => $this->getSold($record)),
@@ -170,7 +159,7 @@ class StockHistories extends Page implements HasTable
                     // ->sortable()
                     ->getStateUsing(fn($record) => $this->getClosingStock($record)),
             ])
-            ->defaultSort('items_sum_quantity', 'desc')
+            ->defaultSort('newstock_sum_quantity', 'desc')
             ->filters([
 
                 SelectFilter::make('product_category_id')
@@ -203,13 +192,13 @@ class StockHistories extends Page implements HasTable
     {
         $startDate = $this->filterData['startDate'] ?? today();
 
-        $stock_history = StockHistory::getStockHistory($startDate);
+        $stock_history = StoreStock::getStockHistory($startDate);
         if ($stock_history) {
             $opening_stock = json_decode($stock_history->closing_stock, true);
             $filteredStock = collect($opening_stock)->firstWhere('product_id', $record->id);
             return $filteredStock ? $filteredStock['closing_qty'] : 0;
         }
-        return 'No closing stock';
+        return 'store not closed';
     }
 
     protected function getSupply($record)
@@ -222,11 +211,12 @@ class StockHistories extends Page implements HasTable
         return NewStock::where('product_id', $record->id)
             ->whereDate('created_at', '>=', date($startDate))
             ->whereDate('created_at', '<=', date($endDate))
-            ->where('to', $locations[0])
+            ->where('to', $locations[1])
+            ->orderBy('quantity')
             ->sum('quantity');
     }
 
-    protected function getReturn($record)
+    protected function getSold($record)
     {
         $locations = ['Shop front', 'Store', 'Market'];
 
@@ -236,19 +226,7 @@ class StockHistories extends Page implements HasTable
         return NewStock::where('product_id', $record->id)
             ->whereDate('created_at', '>=', date($startDate))
             ->whereDate('created_at', '<=', date($endDate))
-            ->where('from', $locations[0])
-            ->sum('quantity');
-    }
-
-    protected function getSold($record)
-    {
-        $startDate = $this->filterData['startDate'] ?? today();
-        $endDate = $this->filterData['endDate'] ?? today();
-
-        return $record->items()
-            ->whereDate('created_at', '>=', date($startDate))
-            ->whereDate('created_at', '<=', date($endDate))
-            ->whereNotIn('order_id', Order::failed_order())
+            ->where('from', $locations[1])
             ->sum('quantity');
     }
 
@@ -257,7 +235,7 @@ class StockHistories extends Page implements HasTable
         $endDate = $this->filterData['endDate'] ?? today();
 
         if ($endDate != today()) {
-            $stock_history = StockHistory::getClosingStockHistory($endDate);
+            $stock_history = StoreStock::getClosingStockHistory($endDate);
             if ($stock_history) {
                 $opening_stock = json_decode($stock_history->closing_stock, true);
                 $filteredStock = collect($opening_stock)->firstWhere('product_id', $record->id);
@@ -267,6 +245,6 @@ class StockHistories extends Page implements HasTable
                 return 'No closing stock';
             }
         }
-        return $record->quantity;
+        return $record->store;
     }
 }

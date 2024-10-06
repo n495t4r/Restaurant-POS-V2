@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -97,6 +98,23 @@ class PaymentResource extends Resource
                                 ->required(),
                             Forms\Components\Select::make('payment_method_id')
                                 ->relationship('payment_method', 'name')
+                                ->options(function (): array {
+                                    return PaymentMethod::query()
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(function ($paymentmethod) {
+                                        $label = $paymentmethod->name;
+                                        if (!$paymentmethod->is_active) {
+                                            $label .= ' (inactive)';
+                                        }
+                                        return [$paymentmethod->id => $label];
+                                    })
+                                    ->toArray();
+                                })
+                                ->disableOptionWhen(function (string $value, string $label): bool {
+                                    $paymentmethod = PaymentMethod::find($value);
+                                    return $paymentmethod && !$paymentmethod->is_active;
+                                })
                                 ->required(),
                             Forms\Components\TextInput::make('paid')
                                 ->label('Pay(balance)')
