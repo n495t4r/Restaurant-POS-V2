@@ -2,28 +2,31 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\DateRangeSelect;
 use App\Filament\Resources\NewStockResource\Pages;
 use App\Filament\Resources\NewStockResource\RelationManagers;
 use App\Models\NewStock;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class NewStockResource extends Resource
 {
     protected static ?string $model = NewStock::class;
-
-    // protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
+    protected ?string $subheading = 'Custom Page Subheading';
     protected static ?string $navigationIcon = 'heroicon-o-arrow-right-start-on-rectangle';
-
 
 
     public static function form(Form $form): Form
@@ -53,6 +56,13 @@ class NewStockResource extends Resource
                     ->options(collect($locations)->mapWithKeys(fn($item) => [$item => $item]))
                     ->required()
                     // ->default($locations[1])
+
+                    ->disableOptionWhen(function (string $value) use ($locations) {
+                        if ($value === $locations[0]) {
+                            return !auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('Manager');
+                        }
+                        return false;
+                    })
                     ->live(),
 
                 Forms\Components\Select::make('to')
@@ -112,6 +122,12 @@ class NewStockResource extends Resource
                     ->sortable()
                     ->date()
                     ->searchable(),
+                    Tables\Columns\TextColumn::make('from')
+                    // ->badge()
+                    ->sortable(),
+                    Tables\Columns\TextColumn::make('to')
+                    // ->badge()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -157,6 +173,16 @@ class NewStockResource extends Resource
 
                 //         return $query;
                 //     })
+
+                DateRangeFilter::make('supply_date')
+                    ->label('Supply date')
+                    // ->timezone('UTC')
+                    //Default Start Date
+                    ->startDate(Carbon::now())
+                    //Default EndDate
+                    ->endDate(Carbon::now())
+                    ->firstDayOfWeek(1),
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

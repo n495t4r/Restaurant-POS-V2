@@ -58,6 +58,17 @@ class OrderResource extends Resource
     {
         // return PostOrderResource::form($form);
         // return NewStockResource::form($form);
+        $status = [0 => 'failed', 1 => 'completed', 2 => 'pending'];
+        return $form 
+            ->schema([
+            Forms\Components\Select::make('status')
+                ->label('Order Status')
+                ->options(
+                    $status
+                )
+                ->required(),
+            ]);
+
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -628,6 +639,7 @@ class OrderResource extends Resource
                         shouldOpenInNewTab: true
                     ),
                 Tables\Actions\ViewAction::make()->iconButton(),
+                Tables\Actions\EditAction::make()->iconButton(),
                 Tables\Actions\DeleteAction::make()->iconButton()
             ])
             ->bulkActions([
