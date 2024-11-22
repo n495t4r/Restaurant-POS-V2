@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'chowdeck' => [
+        'api_key' => env('CHOWDECK_API_KEY'),
+        'merchant_reference' => env('CHOWDECK_MERCHANT_REFERENCE'),
+    ],
+
 ];
