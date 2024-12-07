@@ -46,6 +46,7 @@ class CustomerResource extends Resource
                 Forms\Components\Toggle::make('is_active')
                     ->onColor('success')
                     ->offColor('danger')
+                    ->default(true)
                     ->required(),
                 // Forms\Components\TextInput::make('user_id')
                 //     ->required()

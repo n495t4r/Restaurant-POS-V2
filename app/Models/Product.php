@@ -26,6 +26,29 @@ class Product extends Model
         'status' => 'boolean',
     ];
 
+    public function recipe()
+    {
+        return $this->hasOne(Recipe::class);
+    }
+
+    public function getCostPerPortionAttribute()
+    {
+        if (!$this->recipe) {
+            return 0;
+        }
+
+        $totalCost = $this->recipe->recipeItems->sum(function ($item) {
+            return $item->rawMaterial->unit_cost * $item->quantity;
+        });
+
+        return $this->recipe->yield > 0 ? $totalCost / $this->recipe->yield : 0;
+    }
+
+    public function getRecommendedSellingPriceAttribute()
+    {
+        return $this->cost_per_portion * 1.3; // 30% markup
+    }
+
     public function storeStock()
     {
         return $this->hasOne(StoreStock::class);

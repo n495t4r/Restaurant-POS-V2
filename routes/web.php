@@ -3,6 +3,7 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\StockManagementController;
+use App\Models\Recipe;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,11 @@ use Illuminate\Support\Facades\Route;
 
 
 // Route::redirect('/', '/peva');
+// Route::get('/recipes/{recipe}', function (Recipe $recipe) {
+//     // Render the Filament resource view for the specified recipe
+//     return view('filament.resources.recipes.view', ['recipe' => $recipe]);
+// })->name('filament.resources.recipes.view');
+
 
 Route::get('/', function () {
     return view('welcome');

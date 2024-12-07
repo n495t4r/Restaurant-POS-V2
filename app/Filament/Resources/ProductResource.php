@@ -72,26 +72,37 @@ class ProductResource extends Resource
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('image')
                     ->defaultImageUrl(url('product.png'))
-                    ->disk('public')
-                // ->visibility('private')
-                ,
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
                     ->money('NGN')
                     ->sortable(),
+                    Tables\Columns\TextColumn::make('cost_per_portion')
+                    ->money('NGN')
+                    ->sortable()
+                    ->tooltip('Cost per portion based on recipe')
+                    ->getStateUsing(fn (Product $record) => $record->cost_per_portion)
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('recommended_selling_price')
+                    ->label('Recomm. Price')
+                    ->money('NGN')
+                    ->sortable()
+                    ->tooltip('Recommended selling price (30% markup)')
+                    ->getStateUsing(fn (Product $record) => $record->recommended_selling_price)
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('product_category.name')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('product_category.name')
-                    ->sortable()
-                    ->searchable(),
                 Tables\Columns\IconColumn::make('status')
+                ->label('is active')
+                ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->boolean(),
-                Tables\Columns\TextColumn::make('counter')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -105,8 +116,17 @@ class ProductResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('viewRecipe')
+                    ->label('View Recipe')
+                    ->icon('heroicon-o-book-open')
+                    ->iconButton()
+                    ->url(fn (Product $record) => RecipeResource::getUrl('view', ['record' => $record->recipe]),
+                    shouldOpenInNewTab: true)
+                    ->hidden(fn (Product $record) => $record->recipe === null),
+                Tables\Actions\EditAction::make()
+                ->iconButton(),
+                Tables\Actions\DeleteAction::make()
+                ->iconButton(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
