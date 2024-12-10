@@ -84,6 +84,7 @@ class RecipeResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')->label('Recipe ID'),
                 Tables\Columns\TextColumn::make('product.name')
                 ->searchable(),
                 Tables\Columns\TextColumn::make('preparation_time')

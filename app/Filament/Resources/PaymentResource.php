@@ -6,10 +6,12 @@ use App\Filament\Resources\PaymentResource\Pages;
 use App\Filament\Resources\PaymentResource\RelationManagers;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\OrderChannel;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -40,66 +42,71 @@ class PaymentResource extends Resource
             ->whereNot('status', 0)->get();
 
         return $form
-        ->columns(1)
-            ->schema([
-                Split::make([
-                    Grid::make(1)
-                        ->columnSpan(2)
-                        ->schema([
-                            Forms\Components\Select::make('order_id')
-                                ->label('Unpaid orders')
-                                ->searchable()
-                                ->columnSpan(2)
+            ->columns(1)
+            ->schema(static::getFormSchema());
+    }
 
-                                ->preload()
-                                // ->relationship('order', 'id')
-                                ->options(
-                                    function () {
+    public static function getFormSchema2(): array
+    {
+        return [
+            Split::make([
+                Grid::make(1)
+                    ->columnSpan(2)
+                    ->schema([
+                        Forms\Components\Select::make('order_id')
+                            ->label('Unpaid orders')
+                            ->searchable()
+                            ->columnSpan(2)
 
-                                        $orders = Order::whereNotIn('id', Order::full_payment())
+                            ->preload()
+                            // ->relationship('order', 'id')
+                            ->options(
+                                function () {
+
+                                    $orders = Order::whereNotIn('id', Order::full_payment())
                                         ->whereNotIn('id', Order::failed_order())
                                         ->whereNotIn('id', Order::staff_order())
                                         ->whereNotIn('id', Order::glovo_order())
                                         ->whereNotIn('id', Order::chowdeck_order())
                                         ->orderBy('id', 'desc')
                                         ->get();
-                                        $f_string = [];
+                                    $f_string = [];
 
-                                        foreach ($orders as $order) {
-                                            $customerName = $order->customer ? $order->customer->name : 'Unselected';
-                                            $timeAgo = Carbon::parse($order->created_at)->diffForHumans();
-                                            
-                                            $f_string[$order->id] = $order->id . ' (' .$customerName . ') ' . $timeAgo;
-                                        }
+                                    foreach ($orders as $order) {
+                                        $customerName = $order->customer ? $order->customer->name : 'Unselected';
+                                        $timeAgo = Carbon::parse($order->created_at)->diffForHumans();
 
-                                        return $f_string;
+                                        $f_string[$order->id] = $order->id . ' (' . $customerName . ') ' . $timeAgo;
                                     }
 
-                                )
-                                ->live()
-                                ->afterStateUpdated(function (Set $set, $state) {
-                                    // dd($state);
-                                    $query = Order::query()
-                                        ->where('id', $state)
-                                        ->pluck('channel_id', 'customer_id')->toArray();
+                                    return $f_string;
+                                }
 
-                                    $sum_price = OrderItem::where('order_id', $state)->sum('price');
-                                    $sum_paid = Payment::where('order_id', $state)->sum('paid');
+                            )
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                // dd($state);
+                                $query = Order::query()
+                                    ->where('id', $state)
+                                    ->pluck('channel_id', 'customer_id')->toArray();
 
-                                    $set('customer', array_keys($query));
-                                    $set('channel', array_values($query));
-                                    $set('order.price', $sum_price);
-                                    $set('total_paid', number_format($sum_paid, 2, '.', ''));
-                                })->disabled(fn(string $operation) => $operation == 'edit')
-                                ->required(),
+                                $sum_price = OrderItem::where('order_id', $state)->sum('price');
+                                $sum_paid = Payment::where('order_id', $state)->sum('paid');
 
-                            Forms\Components\Hidden::make('user_id')
-                                ->default(auth()->id())
-                                ->required(),
-                            Forms\Components\Select::make('payment_method_id')
-                                ->relationship('payment_method', 'name')
-                                ->options(function (): array {
-                                    return PaymentMethod::query()
+                                $set('customer', array_keys($query));
+                                $set('channel', array_values($query));
+                                $set('order.price', $sum_price);
+                                $set('total_paid', number_format($sum_paid, 2, '.', ''));
+                            })->disabled(fn(string $operation) => $operation == 'edit')
+                            ->required(),
+
+                        Forms\Components\Hidden::make('user_id')
+                            ->default(auth()->id())
+                            ->required(),
+                        Forms\Components\Select::make('payment_method_id')
+                            ->relationship('payment_method', 'name')
+                            ->options(function (): array {
+                                return PaymentMethod::query()
                                     ->orderBy('name')
                                     ->get()
                                     ->mapWithKeys(function ($paymentmethod) {
@@ -110,76 +117,199 @@ class PaymentResource extends Resource
                                         return [$paymentmethod->id => $label];
                                     })
                                     ->toArray();
-                                })
-                                ->disableOptionWhen(function (string $value, string $label): bool {
-                                    $paymentmethod = PaymentMethod::find($value);
-                                    return $paymentmethod && !$paymentmethod->is_active;
-                                })
-                                ->required(),
-                            Forms\Components\TextInput::make('paid')
-                                ->label('Pay(balance)')
-                                ->required()
-                                ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
-                                ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
-                                ->minValue(50)
-                                ->step(50)
-                                ->numeric(),
-                        ]),
-                    Grid::make()
-                        // ->columnSpanFull()
+                            })
+                            ->disableOptionWhen(function (string $value, string $label): bool {
+                                $paymentmethod = PaymentMethod::find($value);
+                                return $paymentmethod && !$paymentmethod->is_active;
+                            })
+                            ->required(),
+                        Forms\Components\TextInput::make('paid')
+                            ->label('Pay(balance)')
+                            ->required()
+                            ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->minValue(50)
+                            ->step(50)
+                            ->numeric(),
+                    ]),
+                Grid::make()
+                    // ->columnSpanFull()
 
-                        ->grow(false)
-                        ->schema([
-                            Forms\Components\Select::make('customer')
-                                ->relationship('order.customer', 'name')
-                                ->formatStateUsing(function ($record, string $operation) {
-                                    if ($operation === 'edit') {
-                                        $order_id = $record->order_id;
-                                        $state = Order::query()->where('id', $order_id)->pluck('customer_id');
-                                        return $state;
-                                    }
-                                })
-                                ->label('Customer')
-                                ->disabled()
-                                ->dehydrated(false)
-                            // ->disabled(fn( ?string $state) => !empty($state))
-                            ,
-                            Forms\Components\Select::make('channel')
-                                ->relationship('order.channel', 'channel')
-                                ->formatStateUsing(function ($record, string $operation) {
-                                    if ($operation === 'edit') {
-                                        $order_id = $record->order_id;
-                                        $state = Order::query()->where('id', $order_id)->pluck('channel_id');
-                                        return $state;
-                                    }
-                                })
-                                ->label('Channel')
-                                ->dehydrated(false)
-                                ->disabled(),
-                            Forms\Components\TextInput::make('order.price')
-                                ->disabled()
-                                ->label('Order Amount')
-                                ->formatStateUsing(function ($record, string $operation) {
-                                    if ($operation === 'edit') {
-                                        $sum_price = OrderItem::where('order_id', $record->order_id)->sum('price');
-                                        return $sum_price;
-                                    }
-                                }),
+                    ->grow(false)
+                    ->schema([
+                        Forms\Components\Select::make('customer')
+                            ->relationship('order.customer', 'name')
+                            ->formatStateUsing(function ($record, string $operation) {
+                                if ($operation === 'edit') {
+                                    $order_id = $record->order_id;
+                                    $state = Order::query()->where('id', $order_id)->pluck('customer_id');
+                                    return $state;
+                                }
+                            })
+                            ->label('Customer')
+                            ->disabled()
+                            ->dehydrated(false)
+                        // ->disabled(fn( ?string $state) => !empty($state))
+                        ,
+                        Forms\Components\Select::make('channel')
+                            ->relationship('order.channel', 'channel')
+                            ->formatStateUsing(function ($record, string $operation) {
+                                if ($operation === 'edit') {
+                                    $order_id = $record->order_id;
+                                    $state = Order::query()->where('id', $order_id)->pluck('channel_id');
+                                    return $state;
+                                }
+                            })
+                            ->label('Channel')
+                            ->dehydrated(false)
+                            ->disabled(),
+                        Forms\Components\TextInput::make('order.price')
+                            ->disabled()
+                            ->label('Order Amount')
+                            ->formatStateUsing(function ($record, string $operation) {
+                                if ($operation === 'edit') {
+                                    $sum_price = OrderItem::where('order_id', $record->order_id)->sum('price');
+                                    return $sum_price;
+                                }
+                            }),
 
-                            Forms\Components\TextInput::make('total_paid')
-                                ->formatStateUsing(function ($record, string $operation) {
-                                    if ($operation === 'edit') {
-                                        $sum_price = $record->paid;
-                                        return $sum_price;
-                                    }
-                                })
-                                ->label('Total paid')
-                                ->disabled(),
-                        ])
-                ])
+                        Forms\Components\TextInput::make('total_paid')
+                            ->formatStateUsing(function ($record, string $operation) {
+                                if ($operation === 'edit') {
+                                    $sum_price = $record->paid;
+                                    return $sum_price;
+                                }
+                            })
+                            ->label('Total paid')
+                            ->disabled(),
+                    ])
+            ])
+        ];
+    }
 
+    public static function getFormSchema(): array
+    {
+        return [
+            Split::make([
+                Grid::make(1)
+                    ->columnSpan(2)
+                    ->schema([
+                        Forms\Components\Select::make('order_id')
+                            ->label('Unpaid orders')
+                            ->searchable()
+                            ->columnSpan(2)
+                            ->preload()
+                            ->options(function () {
+                                $orders = Order::whereNotIn('id', Order::full_payment())
+                                    ->whereNotIn('id', Order::failed_order())
+                                    ->whereNotIn('id', Order::staff_order())
+                                    ->whereNotIn('id', Order::glovo_order())
+                                    ->whereNotIn('id', Order::chowdeck_order())
+                                    ->orderBy('id', 'desc')
+                                    ->get();
+                                $f_string = [];
 
-            ]);
+                                foreach ($orders as $order) {
+                                    $customerName = $order->customer_id ? Customer::find($order->customer_id)->name : 'Unselected';
+                                    $timeAgo = Carbon::parse($order->created_at)->diffForHumans();
+
+                                    $f_string[$order->id] = $order->id . ' (' . $customerName . ') ' . $timeAgo;
+                                }
+
+                                return $f_string;
+                            })
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                if ($state) {
+                                    $order = Order::find($state);
+                                    $sum_price = OrderItem::where('order_id', $state)->sum('price');
+                                    $sum_paid = Payment::where('order_id', $state)->sum('paid');
+
+                                    $set('customer', $order->customer_id);
+                                    $set('channel', $order->channel_id);
+                                    $set('order.price', $sum_price);
+                                    $set('total_paid', number_format($sum_paid, 2, '.', ''));
+                                }
+                            })
+                            ->disabled(fn (string $operation) => $operation === 'edit')
+                            ->required(),
+
+                        Forms\Components\Hidden::make('user_id')
+                            ->default(auth()->id())
+                            ->required(),
+
+                        Forms\Components\Select::make('payment_method_id')
+                            ->label('Payment Method')
+                            ->options(function (): array {
+                                return PaymentMethod::query()
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(function ($paymentmethod) {
+                                        $label = $paymentmethod->name;
+                                        if (!$paymentmethod->is_active) {
+                                            $label .= ' (inactive)';
+                                        }
+                                        return [$paymentmethod->id => $label];
+                                    })
+                                    ->toArray();
+                            })
+                            ->disableOptionWhen(function (string $value, string $label): bool {
+                                $paymentmethod = PaymentMethod::find($value);
+                                return $paymentmethod && !$paymentmethod->is_active;
+                            })
+                            ->required(),
+
+                        Forms\Components\TextInput::make('paid')
+                            ->label('Pay(balance)')
+                            ->required()
+                            ->placeholder(fn (Forms\Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->maxValue(fn (Forms\Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->minValue(50)
+                            ->step(50)
+                            ->numeric(),
+                    ]),
+
+                Grid::make()
+                    ->grow(false)
+                    ->schema([
+                        Forms\Components\Select::make('customer')
+                            ->label('Customer')
+                            ->options(function () {
+                                return Customer::pluck('name', 'id');
+                            })
+                            ->disabled()
+                            ->dehydrated(false),
+
+                        Forms\Components\Select::make('channel')
+                            ->label('Channel')
+                            ->options(function () {
+                                return OrderChannel::pluck('channel', 'id');
+                            })
+                            ->disabled()
+                            ->dehydrated(false),
+
+                        Forms\Components\TextInput::make('order.price')
+                            ->disabled()
+                            ->label('Order Amount'),
+
+                        Forms\Components\TextInput::make('total_paid')
+                            ->label('Total paid')
+                            ->disabled(),
+                    ])
+            ])
+        ];
+    }
+
+    public static function makePaymentAction(): Action
+    {
+        return Action::make('makePayment')
+            ->label('Make Payment')
+            ->form(static::getFormSchema())
+            ->action(function (array $data) {
+                Payment::create($data);
+            })
+            ->modalHeading('Make Payment')
+            ->modalSubmitActionLabel('Pay');
     }
 
     public static function table(Table $table): Table
@@ -204,10 +334,16 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('user.first_name')
                     ->label('Created by')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('order.created_at')
+                    ->label('Order date')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Payment date')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -215,7 +351,9 @@ class PaymentResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->filters([
+
                 Filter::make('created_at')
+                    ->label('Payment Date')
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
 

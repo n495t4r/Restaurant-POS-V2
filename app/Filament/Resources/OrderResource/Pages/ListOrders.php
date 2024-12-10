@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Payment;
@@ -18,6 +19,7 @@ class ListOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            
         ];
     }
 

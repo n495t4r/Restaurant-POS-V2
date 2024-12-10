@@ -2,18 +2,22 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\NewStockResource;
+use App\Filament\Resources\NewStockResource\Pages\ManageNewStocks;
 use App\Models\Order;
 use App\Models\NewStock;
 use App\Models\StockHistory;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Actions\FilterAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,6 +53,19 @@ class StockHistories extends Page implements HasTable
                 ->action(function (array $data): void {
                     $this->filterData = $data;
                 }),
+
+                Actions\CreateAction::make('Manage stock')
+                ->label('Add stock')
+                // ->visible(auth()->user()->hasRole('super_admin'))
+                ->form(
+                    function (Form $form) {
+                        return NewStockResource::form($form);
+                    }
+                )->using(
+                    function (array $data) {
+                        return ManageNewStocks::new_stock($data);
+                    }
+                ),
 
             Action::make('closeStore')
                 ->label('Close cashier unit')
@@ -154,7 +171,7 @@ class StockHistories extends Page implements HasTable
                     // ->sortable()
                     ->getStateUsing(fn($record) => $this->getSupply($record)),
                 TextColumn::make('return')
-                    ->label('Return to store')
+                    ->label('Return')
                     ->toggleable(isToggledHiddenByDefault: true)
                     // ->sortable()
                     ->getStateUsing(fn($record) => $this->getReturn($record)),

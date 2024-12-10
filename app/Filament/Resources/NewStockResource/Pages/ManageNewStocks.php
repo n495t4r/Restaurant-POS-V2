@@ -36,10 +36,10 @@ class ManageNewStocks extends ManageRecords
             $quantity = $data['quantity'];
 
             // Decrease quantity from the 'from' location
-            if ($data['from'] === 'Store') {
+            if ($data['from'] === 'Store' || $data['from'] === 'Kitchen') {
                 if (!$product->decreaseQuantity($product->id, $quantity, true)) {
                     Notification::make()
-                        ->title('Not enough quantity in Store.')
+                        ->title('Not enough quantity in Store/Kitchen.')
                         ->danger()
                         // ->duration(5000)
                         ->send();
@@ -50,22 +50,47 @@ class ManageNewStocks extends ManageRecords
             } else if ($data['from'] === 'Shop front') {
                 if (!$product->decreaseQuantity($product->id, $quantity)) {
                     Notification::make()
-                    ->title('Not enough quantity in Shop front.')
+                        ->title('Not enough quantity in Shop front.')
+                        ->danger()
+                        // ->duration(5000)
+                        ->send();
+
+                    return;
+                }
+            }
+
+            $newStock = null;
+            // Increase quantity in the 'to' location
+            if ($data['to'] === 'Store' || $data['to'] === 'Kitchen') {
+                $product->increaseQuantity($product->id, $quantity, true);
+
+                $newStock = NewStock::create($data);
+            } else if ($data['to'] === 'Shop front') {
+                $product->increaseQuantity($product->id, $quantity);
+                $newStock = NewStock::create($data);
+                
+            } else if($data['to'] === 'Retire') {
+                Notification::make()
+                    ->title('Stock has been Retired')
+                    ->success()
+                    // ->duration(5000)
+                    ->send();
+                
+                $newStock = NewStock::create($data);
+                // return;
+            }
+
+            if (!$newStock) {
+
+                Notification::make()
+                    ->title('No stock was updated due to an unhandled \'TO\' location.')
                     ->danger()
                     // ->duration(5000)
                     ->send();
 
-                return;                }
+                return;
             }
 
-            // Increase quantity in the 'to' location
-            if ($data['to'] === 'Store') {
-                $product->increaseQuantity($product->id, $quantity, true);
-            } else {
-                $product->increaseQuantity($product->id, $quantity);
-            }
-
-            $newStock = NewStock::create($data);
             DB::commit();
             return $newStock;
         } catch (\Exception $e) {

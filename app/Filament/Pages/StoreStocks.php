@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\NewStockResource;
+use App\Filament\Resources\NewStockResource\Pages\ManageNewStocks;
 use App\Models\Order;
 use App\Models\NewStock;
 use App\Models\Product;
@@ -9,12 +11,14 @@ use App\Models\ProductCategory;
 use App\Models\StockHistory;
 use App\Models\StoreStock;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Actions\FilterAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,7 +36,7 @@ class StoreStocks extends Page implements HasTable
 
     protected static ?string $navigationIcon = 'heroicon-c-square-3-stack-3d';
     protected static string $view = 'filament.pages.store-stock';    
-    protected static ?string $title = 'Store Stock';
+    protected static ?string $title = 'Store/Kitchen Stock';
     protected static ?string $slug = 'store-stock';
 
     public $filterData = [
@@ -63,7 +67,18 @@ class StoreStocks extends Page implements HasTable
                 ->action(function (array $data): void {
                     $this->filterData = $data;
                 }),
-
+                Actions\CreateAction::make('Manage stock')
+                ->label('Add stock')
+                // ->visible(auth()->user()->hasRole('super_admin'))
+                ->form(
+                    function (Form $form) {
+                        return NewStockResource::form($form);
+                    }
+                )->using(
+                    function (array $data) {
+                        return ManageNewStocks::new_stock($data);
+                    }
+                ),
             Action::make('closeStore')
                 ->label('Close Store')
                 ->color('danger')
@@ -203,7 +218,7 @@ class StoreStocks extends Page implements HasTable
 
     protected function getSupply($record)
     {
-        $locations = ['Shop front', 'Store', 'Market'];
+        $locations = ['Shop front', 'Store', 'Market', 'Kitchen'];
 
         $startDate = $this->filterData['startDate'] ?? today();
         $endDate = $this->filterData['endDate'] ?? today();
@@ -211,14 +226,14 @@ class StoreStocks extends Page implements HasTable
         return NewStock::where('product_id', $record->id)
             ->whereDate('created_at', '>=', date($startDate))
             ->whereDate('created_at', '<=', date($endDate))
-            ->where('to', $locations[1])
+            ->whereIn('to', [$locations[1], $locations[3]])
             ->orderBy('quantity')
             ->sum('quantity');
     }
 
     protected function getSold($record)
     {
-        $locations = ['Shop front', 'Store', 'Market'];
+        $locations = ['Shop front', 'Store', 'Market', 'Kitchen'];
 
         $startDate = $this->filterData['startDate'] ?? today();
         $endDate = $this->filterData['endDate'] ?? today();
@@ -226,7 +241,7 @@ class StoreStocks extends Page implements HasTable
         return NewStock::where('product_id', $record->id)
             ->whereDate('created_at', '>=', date($startDate))
             ->whereDate('created_at', '<=', date($endDate))
-            ->where('from', $locations[1])
+            ->whereIn('from', [$locations[1], $locations[3]])
             ->sum('quantity');
     }
 

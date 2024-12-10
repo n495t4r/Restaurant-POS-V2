@@ -32,14 +32,20 @@ class NewStockResource extends Resource
     public static function form(Form $form): Form
     {
 
-        $locations = ['Shop front', 'Store', 'Market'];
-        $toLocations = ['Shop front', 'Store'];  // Excluding 'Market'
+        $locations = ['Shop front', 'Store', 'Market', 'Kitchen'];
+        $toLocations = ['Shop front', 'Store', 'Kitchen', 'Retire'];  // Excluding 'Market'
         $products = Product::where('status', true)->pluck('name', 'id');
+
+        $super_adminRole = auth()->user()->hasRole('super_admin');
+        $managerRole = auth()->user()->hasRole('Manager');
+        $cookRole = auth()->user()->hasRole('Cook');
+        $cashierRole = auth()->user()->hasRole('Cashier');
 
         return $form
             ->schema([
                 Forms\Components\Select::make('product_id')
                     ->label('Product')
+                    ->searchable()
                     // ->relationship('product', 'name')
                     ->options(
                         $products
@@ -53,21 +59,51 @@ class NewStockResource extends Resource
 
                 Forms\Components\Select::make('from')
                     ->label('From')
-                    ->options(collect($locations)->mapWithKeys(fn($item) => [$item => $item]))
+                    // ->options(collect($locations)->mapWithKeys(fn($item) => [$item => $item]))
+                    ->options(function (callable $get) use ($locations, $managerRole, $cookRole, $cashierRole) {
+
+                        if ($cookRole){
+                            unset($locations[1]); // Remove Store option
+                            // unset($locations[2]); // Remove Market option
+                        }
+
+                        if ($cashierRole){
+                            unset($locations[0]); // Remove from Shop front option
+                            unset($locations[3]); // Remove from Kitchen option
+                        }
+
+                        return collect($locations)
+                            // ->reject(fn($item) => $item === $get('from'))
+                            ->mapWithKeys(fn($item) => [$item => $item]);
+                    })
                     ->required()
                     // ->default($locations[1])
 
-                    ->disableOptionWhen(function (string $value) use ($locations) {
-                        if ($value === $locations[0]) {
-                            return !auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('Manager');
-                        }
-                        return false;
-                    })
+                    // ->disableOptionWhen(function (string $value) use ($locations, $cashierRole) {
+                    //     if ($value === $locations[0] || $value === $locations[3]) {
+                    //         return $cashierRole;
+                    //         // return !auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('Manager') && !auth()->user()->hasRole('Cook');
+                    //     }
+                    //     return false;
+                    // })
                     ->live(),
 
                 Forms\Components\Select::make('to')
                     ->label('To')
-                    ->options(function (callable $get) use ($toLocations) {
+                    ->options(function (callable $get) use ($toLocations, $cookRole, $super_adminRole, $cashierRole) {
+
+                        if ($cookRole || $cashierRole){
+                            unset($toLocations[1]); // Remove send to store option
+                        }
+
+                        if (!$super_adminRole){
+                            unset($toLocations[3]); // Remove Retire option
+                        }
+
+                        if ($cashierRole){
+                            unset($toLocations[2]); // Remove send to Kitchen option
+                        }
+
                         return collect($toLocations)
                             ->reject(fn($item) => $item === $get('from'))
                             ->mapWithKeys(fn($item) => [$item => $item]);
@@ -75,6 +111,12 @@ class NewStockResource extends Resource
                     ->required()
                     // ->default($toLocations[0])
                     ->disabled(fn(callable $get) => ! $get('from'))
+                    // ->disableOptionWhen(function (string $value) use ($toLocations) {
+                    //     if ($value === $toLocations[2]) {
+                    //         return !auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('Manager') && !auth()->user()->hasRole('Cook');
+                    //     }
+                    //     return false;
+                    // })
                     ->live(),
                 Forms\Components\Hidden::make('user_id')
                     ->default(auth()->id())

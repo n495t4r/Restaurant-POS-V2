@@ -76,6 +76,7 @@ class RawMaterialResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')->label('Item ID'),
                 Tables\Columns\TextColumn::make('name')->searchable(),
                 Tables\Columns\TextColumn::make('category')->searchable(),
                 Tables\Columns\TextColumn::make('stock_quantity')
