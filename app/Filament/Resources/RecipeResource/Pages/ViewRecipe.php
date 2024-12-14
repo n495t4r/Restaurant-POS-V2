@@ -41,7 +41,12 @@ class ViewRecipe extends ViewRecord
                             ->label('Preparation Time')
                             ->suffix(' minutes'),
                     ])
-                    ->columns(2),
+                    ->columns([
+                        'xs' => 2,
+                        'sm' => 4,
+                        'md' => 4,
+                        'xl' => 5,
+                    ]),
 
                 Section::make('Ingredients')
                     ->collapsed(true)
@@ -53,7 +58,12 @@ class ViewRecipe extends ViewRecord
                                 TextEntry::make('quantity')
                                     ->suffix(fn ($record) => $record->rawMaterial->unit_of_measurement),
                             ])
-                            ->columns(2),
+                            ->columns([
+                                'xs' => 3,
+                                'sm' => 3,
+                                'md' => 3,
+                                'xl' => 3,
+                            ]),
                     ]),
 
                 Section::make('Instructions')
@@ -76,7 +86,12 @@ class ViewRecipe extends ViewRecord
                             ->label('Last Updated')
                             ->dateTime(),
                     ])
-                    ->columns(3),
+                    ->columns([
+                        'xs' => 3,
+                        'sm' => 3,
+                        'md' => 3,
+                        'xl' => 3,
+                    ]),
             ]);
     }
 }

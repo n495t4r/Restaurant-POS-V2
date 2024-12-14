@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 // use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -83,7 +84,7 @@ class RawMaterialResource extends Resource
                 ->suffix(fn ($record) => ' '.$record->unit_of_measurement),
                 Tables\Columns\TextColumn::make('unit_cost')->money('NGN'),
                 Tables\Columns\TextColumn::make('reorder_level'),
-                Tables\Columns\IconColumn::make('is_active')->boolean()
+                ToggleColumn::make('is_active')
                 ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('user.first_name')
                 ->toggleable(isToggledHiddenByDefault: true)

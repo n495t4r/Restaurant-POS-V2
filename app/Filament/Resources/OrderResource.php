@@ -35,6 +35,7 @@ use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Summarizers\Range;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
@@ -447,8 +448,13 @@ class OrderResource extends Resource
             ])
             ->searchPlaceholder('search order ID')
             ->defaultSort('id', 'desc')
-            ->filtersFormWidth(MaxWidth::Small)
-            ->filtersFormColumns(2)
+            ->filtersFormWidth(MaxWidth::ExtraSmall)
+            ->filtersFormColumns([
+                'xs' => 2,
+                'sm' => 3,
+                'md' => 3,
+                'xl' => 5,
+            ])
             ->filters([
                 Filter::make('POS')
                     ->label('ATM Card/POS')
@@ -627,7 +633,7 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     })
-            ])
+            ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
 
                 Tables\Actions\Action::make('download')

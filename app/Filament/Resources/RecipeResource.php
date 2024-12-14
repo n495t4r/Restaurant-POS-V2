@@ -6,6 +6,7 @@ use App\Filament\Resources\RecipeResource\Pages;
 use App\Models\Product;
 use App\Models\Recipe;
 use Filament\Forms;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Form;
 // use Filament\Resources\Form;
 use Filament\Resources\Resource;
@@ -25,30 +26,42 @@ class RecipeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('product_id')
-                    ->options(function () {
-                        return Product::whereDoesntHave('recipe')->pluck('name', 'id');
-                    })
-                    ->searchable()
-                    ->required(),
-                Forms\Components\Textarea::make('instructions')
-                    ->required()
-                    ->maxLength(65535),
-                Forms\Components\TextInput::make('preparation_time')
-                    ->required()
-                    ->numeric()
-                    ->suffix('minutes'),
-                Forms\Components\TextInput::make('yield')
-                    ->helperText('Total number of portions to produce')
-                    ->numeric()
-                    ->required(),
-                Forms\Components\TextInput::make('portion_size')
-                    ->required()
-                    ->numeric()
-                    ->suffix('grams'),
-                Forms\Components\Hidden::make('user_id')
-                    ->default(auth()->id())
-                    ->required(),
+                Grid::make([
+                    'xs' => 2,
+                    'sm' => 2,
+                    'md' => 2,
+                    'xl' => 2,
+                ])->schema([
+                    Forms\Components\Select::make('product_id')
+                        ->options(function () {
+                            return Product::whereDoesntHave('recipe')->pluck('name', 'id');
+                        })
+                        ->searchable()
+                        ->required(),
+                    Forms\Components\Textarea::make('instructions')
+                        ->required()
+                        ->maxLength(65535),
+                    Forms\Components\TextInput::make('preparation_time')
+                        ->required()
+                        ->numeric()
+                        ->suffix('minutes'),
+                    Forms\Components\TextInput::make('yield')
+                        ->helperText('Total number of portions to produce')
+                        ->numeric()
+                        ->required(),
+                    Forms\Components\TextInput::make('portion_size')
+                        ->required()
+                        ->numeric()
+                        ->suffix('grams'),
+                    Forms\Components\Toggle::make('is_active')
+                        ->onColor('success')
+                        ->offColor('danger')
+                        ->default(true)
+                        ->required(),
+                    Forms\Components\Hidden::make('user_id')
+                        ->default(auth()->id())
+                        ->required(),
+                ]),
                 Forms\Components\Repeater::make('recipeItems')
                     ->relationship()
                     ->minItems(1)
@@ -71,12 +84,12 @@ class RecipeResource extends Resource
                             })
                             ->numeric(),
                     ])
-                    ->columns(2),
-                Forms\Components\Toggle::make('is_active')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->default(true)
-                    ->required(),
+                    ->columns([
+                        'xs' => 2,
+                        'sm' => 2,
+                        'md' => 2,
+                        'xl' => 2,
+                    ]),
             ]);
     }
 
@@ -86,17 +99,17 @@ class RecipeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')->label('Recipe ID'),
                 Tables\Columns\TextColumn::make('product.name')
-                ->searchable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('preparation_time')
                     ->suffix(' minutes'),
                 Tables\Columns\TextColumn::make('yield')
                     ->suffix(' portions'),
-                    Tables\Columns\TextColumn::make('portion_size')
+                Tables\Columns\TextColumn::make('portion_size')
                     ->suffix(' grams'),
                 Tables\Columns\TextColumn::make('user.first_name')->label('Created by')
-                ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')->boolean()
-                ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

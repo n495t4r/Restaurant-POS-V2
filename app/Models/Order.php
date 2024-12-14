@@ -14,7 +14,7 @@ class Order extends Model
     protected $fillable = [
         'customer_id',
         'channel_id',
-        'payment_method_id',
+        // 'payment_method_id',
         'user_id',
         'commentForCook',
         'status',

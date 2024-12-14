@@ -4,6 +4,7 @@ namespace App\Filament\Resources\KitchenOrderResource\Pages;
 
 use App\Filament\Resources\KitchenOrderResource;
 use App\Models\Order;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Navigation\NavigationItem;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,19 +28,19 @@ class ManageKitchenOrders extends ManageRecords
     {
         return [
             'all' => Tab::make('All')
-                ->badge(Order::query()->count())
+                ->badge(Order::query()->whereDate('created_at', Carbon::today())->count())
                 ->badgeColor('secondary'),
             'New' => Tab::make('New')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 2))
                 ->badge(Order::query()->where('status', 2)->count())
                 ->badgeColor('warning'),
             'Rejected' => Tab::make('Cancelled')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 0))
-                ->badge(Order::query()->where('status', 0)->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 0)->whereDate('created_at', Carbon::today()))
+                ->badge(Order::query()->where('status', 0)->whereDate('created_at', Carbon::today())->count())
                 ->badgeColor('danger'),
             'Completed' => Tab::make('Completed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 1))
-                ->badge(Order::query()->where('status', 1)->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 1)->whereDate('created_at', Carbon::today()))
+                ->badge(Order::query()->where('status', 1)->whereDate('created_at', Carbon::today())->count())
                 ->badgeColor('success'),
         ];
     }

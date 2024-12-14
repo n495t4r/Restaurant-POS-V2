@@ -103,35 +103,39 @@ class PaymentResource extends Resource
                         Forms\Components\Hidden::make('user_id')
                             ->default(auth()->id())
                             ->required(),
-                        Forms\Components\Select::make('payment_method_id')
-                            ->relationship('payment_method', 'name')
-                            ->options(function (): array {
-                                return PaymentMethod::query()
-                                    ->orderBy('name')
-                                    ->get()
-                                    ->mapWithKeys(function ($paymentmethod) {
-                                        $label = $paymentmethod->name;
-                                        if (!$paymentmethod->is_active) {
-                                            $label .= ' (inactive)';
-                                        }
-                                        return [$paymentmethod->id => $label];
-                                    })
-                                    ->toArray();
-                            })
-                            ->disableOptionWhen(function (string $value, string $label): bool {
-                                $paymentmethod = PaymentMethod::find($value);
-                                return $paymentmethod && !$paymentmethod->is_active;
-                            })
-                            ->required(),
-                        Forms\Components\TextInput::make('paid')
-                            ->label('Pay(balance)')
-                            ->required()
-                            ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
-                            ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
-                            ->minValue(50)
-                            ->step(50)
-                            ->numeric(),
                     ]),
+                Forms\Components\TextInput::make('paid')
+                    ->label('Pay(balance)')
+                    ->columnSpanFull()
+                    ->required()
+                    ->placeholder(fn(Get $get): float => $get('order.price') - $get('total_paid'))
+                    ->maxValue(fn(Get $get): float => $get('order.price') - $get('total_paid'))
+                    ->minValue(50)
+                    ->step(50)
+                    ->numeric(),
+                Forms\Components\Select::make('payment_method_id')
+                    ->relationship('payment_method', 'name')
+                    ->columnSpanFull()
+                    ->options(function (): array {
+                        return PaymentMethod::query()
+                            ->orderBy('name')
+                            ->get()
+                            ->mapWithKeys(function ($paymentmethod) {
+                                $label = $paymentmethod->name;
+                                if (!$paymentmethod->is_active) {
+                                    $label .= ' (inactive)';
+                                }
+                                return [$paymentmethod->id => $label];
+                            })
+                            ->toArray();
+                    })
+                    ->disableOptionWhen(function (string $value, string $label): bool {
+                        $paymentmethod = PaymentMethod::find($value);
+                        return $paymentmethod && !$paymentmethod->is_active;
+                    })
+                    ->required(),
+
+
                 Grid::make()
                     // ->columnSpanFull()
 
@@ -231,7 +235,7 @@ class PaymentResource extends Resource
                                     $set('total_paid', number_format($sum_paid, 2, '.', ''));
                                 }
                             })
-                            ->disabled(fn (string $operation) => $operation === 'edit')
+                            ->disabled(fn(string $operation) => $operation === 'edit')
                             ->required(),
 
                         Forms\Components\Hidden::make('user_id')
@@ -240,6 +244,13 @@ class PaymentResource extends Resource
 
                         Forms\Components\Select::make('payment_method_id')
                             ->label('Payment Method')
+                            ->columnSpan([
+                                'default' => 2,
+                                'sm' => 2,
+                                'md' => 1,
+                                'lg' => 1,
+                                'xl' => 1,
+                                '2xl' => 1])
                             ->options(function (): array {
                                 return PaymentMethod::query()
                                     ->orderBy('name')
@@ -260,10 +271,17 @@ class PaymentResource extends Resource
                             ->required(),
 
                         Forms\Components\TextInput::make('paid')
+                        ->columnSpan([
+                            'default' => 2,
+                            'sm' => 2,
+                            'md' => 1,
+                            'lg' => 1,
+                            'xl' => 1,
+                            '2xl' => 1])
                             ->label('Pay(balance)')
                             ->required()
-                            ->placeholder(fn (Forms\Get $get): float => $get('order.price') - $get('total_paid'))
-                            ->maxValue(fn (Forms\Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->placeholder(fn(Forms\Get $get): float => $get('order.price') - $get('total_paid'))
+                            ->maxValue(fn(Forms\Get $get): float => $get('order.price') - $get('total_paid'))
                             ->minValue(50)
                             ->step(50)
                             ->numeric(),

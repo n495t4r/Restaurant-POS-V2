@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -34,7 +35,7 @@ class ProductResource extends Resource
                 Forms\Components\FileUpload::make('image')
                     ->image(),
                 Forms\Components\TextInput::make('price')
-                ->helperText('Selling price per unit/portion')
+                    ->helperText('Selling price per unit/portion')
                     ->required()
                     ->numeric()
                     ->minValue(0)
@@ -70,6 +71,10 @@ class ProductResource extends Resource
                     ->numeric()
                     ->searchable()
                     ->sortable(),
+                ToggleColumn::make('status')
+                    ->label('is active')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
                 Tables\Columns\ImageColumn::make('image')
                     ->defaultImageUrl(url('product.png'))
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -78,18 +83,18 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->money('NGN')
                     ->sortable(),
-                    Tables\Columns\TextColumn::make('cost_per_portion')
+                Tables\Columns\TextColumn::make('cost_per_portion')
                     ->money('NGN')
                     ->sortable()
                     ->tooltip('Cost per portion based on recipe')
-                    ->getStateUsing(fn (Product $record) => $record->cost_per_portion)
+                    ->getStateUsing(fn(Product $record) => $record->cost_per_portion)
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('recommended_selling_price')
                     ->label('Recomm. Price')
                     ->money('NGN')
                     ->sortable()
                     ->tooltip('Recommended selling price (30% markup)')
-                    ->getStateUsing(fn (Product $record) => $record->recommended_selling_price)
+                    ->getStateUsing(fn(Product $record) => $record->recommended_selling_price)
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('product_category.name')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -98,11 +103,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('status')
-                ->label('is active')
-                ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable()
-                    ->boolean(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -120,13 +121,15 @@ class ProductResource extends Resource
                     ->label('View Recipe')
                     ->icon('heroicon-o-book-open')
                     ->iconButton()
-                    ->url(fn (Product $record) => RecipeResource::getUrl('view', ['record' => $record->recipe]),
-                    shouldOpenInNewTab: true)
-                    ->hidden(fn (Product $record) => $record->recipe === null),
+                    ->url(
+                        fn(Product $record) => RecipeResource::getUrl('view', ['record' => $record->recipe]),
+                        shouldOpenInNewTab: true
+                    )
+                    ->hidden(fn(Product $record) => $record->recipe === null),
                 Tables\Actions\EditAction::make()
-                ->iconButton(),
+                    ->iconButton(),
                 Tables\Actions\DeleteAction::make()
-                ->iconButton(),
+                    ->iconButton(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -27,7 +27,8 @@ class ManageOrders extends ManageRecords
     {
         return [
             Actions\CreateAction::make('Manage stock')
-                ->label('Manage stock')
+                ->icon('heroicon-o-arrow-right-start-on-rectangle')
+                ->label('Stocks')
                 // ->visible(auth()->user()->hasRole('super_admin'))
                 ->form(
                     function (Form $form) {
@@ -39,13 +40,16 @@ class ManageOrders extends ManageRecords
                     }
                 ),
                 PaymentResource::makePaymentAction()
+                ->label('Payments')
+                ->icon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            ActionGroup::make([
             Action::make('closeStore')
-                ->label('Close cashier unit')
+                ->label('Close')
                 ->color('danger')
+                ->icon('heroicon-s-x-circle')
                 ->requiresConfirmation()
+                ->modalDescription('Are you sure you want to close cashier unit for the day?')
                 ->disabled(fn() => StockHistories::isCashierUnitClosed())
                 ->action(function () {
                     if (!StockHistories::isCashierUnitClosed()) {
@@ -60,7 +64,7 @@ class ManageOrders extends ManageRecords
                     // ExportFormat::Csv,
                 ])
             
-        ])];
+        ];
         
     }
 }

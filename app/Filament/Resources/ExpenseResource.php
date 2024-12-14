@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
@@ -104,6 +105,12 @@ class ExpenseResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])->defaultSort('date', 'desc')
+            ->filtersFormColumns([
+                'xs' => 2,
+                'sm' => 3,
+                'md' => 3,
+                'xl' => 5,
+            ])
             ->filters([
                 SelectFilter::make('category_id')
                     ->relationship('category', 'name')
@@ -141,7 +148,7 @@ class ExpenseResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
                             );
                     })
-            ])
+            ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

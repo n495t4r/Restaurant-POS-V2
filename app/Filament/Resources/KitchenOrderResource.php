@@ -30,7 +30,7 @@ class KitchenOrderResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $navigationGroup = 'Order';
+    protected static ?string $navigationGroup = 'Kitchen';
     protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -51,24 +51,25 @@ class KitchenOrderResource extends Resource
     }
 
 
-    
+
     public static function table(Table $table): Table
     {
 
         return $table
+            // ->query(Order::query()->where('created_at', now()))
             ->poll('5s')
             ->paginated([12, 24, 48, 96, 'all'])
             ->columns([
                 Split::make([
-                    Stack::make([                
+                    Stack::make([
                         Tables\Columns\TextColumn::make('id')
-                                ->numeric()
-                                ->label('Order ID')
-                                ->prefix('Order ID: ')
-                                ->copyMessage('ID copied')
-                                ->copyMessageDuration(1500)
-                                ->copyable()
-                                ->sortable(),
+                            ->numeric()
+                            ->label('Order ID')
+                            ->prefix('Order ID: ')
+                            ->copyMessage('ID copied')
+                            ->copyMessageDuration(1500)
+                            ->copyable()
+                            ->sortable(),
                         Tables\Columns\TextColumn::make('commentForCook')
                             ->icon('heroicon-m-chat-bubble-oval-left-ellipsis')
                             ->color('primary')
@@ -80,31 +81,31 @@ class KitchenOrderResource extends Resource
                     ]),
                 ]),
                 Panel::make([
-                    Stack::make([               
+                    Stack::make([
                         Tables\Columns\TextColumn::make('Orders')
-                        // ->state(fn (Order $record): string => $record->items[0]->quantity)
-                        ->state(function (Model $record): array {
-                            $itemNames = [];
+                            // ->state(fn (Order $record): string => $record->items[0]->quantity)
+                            ->state(function (Model $record): array {
+                                $itemNames = [];
 
-                            // Loop through each item associated with the record
-                            foreach ($record->items as $item) {
-                                // Get the product name for the current item
-                                $productName = $item->product->name;
+                                // Loop through each item associated with the record
+                                foreach ($record->items as $item) {
+                                    // Get the product name for the current item
+                                    $productName = $item->product->name;
 
-                                // Get the quantity for the current item
-                                $itemQuantity = $item->quantity;
+                                    // Get the quantity for the current item
+                                    $itemQuantity = $item->quantity;
 
-                                // Concatenate the product name and quantity
-                                $itemNames[] = "$itemQuantity"."x "."$productName";
-                            }
+                                    // Concatenate the product name and quantity
+                                    $itemNames[] = "$itemQuantity" . "x " . "$productName";
+                                }
 
-                            // Join the array of item names into a single string separated by commas
-                            // return implode(', ', $itemNames);
-                            return $itemNames;
-                        })
-                        ->listWithLineBreaks(),
+                                // Join the array of item names into a single string separated by commas
+                                // return implode(', ', $itemNames);
+                                return $itemNames;
+                            })
+                            ->listWithLineBreaks(),
                     ]),
-                    
+
                 ])->collapsible(),
             ])->defaultSort('id', 'desc')
             ->contentGrid([
@@ -116,7 +117,7 @@ class KitchenOrderResource extends Resource
                     ->constraints([
                         DateConstraint::make('created_at'),
                     ]),
-                ], layout: FiltersLayout::AboveContentCollapsible)
+            ], layout: FiltersLayout::AboveContentCollapsible)
 
             ->actions([
                 // Tables\Actions\ViewAction::make(),
