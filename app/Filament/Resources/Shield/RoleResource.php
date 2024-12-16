@@ -26,6 +26,8 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    // protected static bool $shouldRegisterNavigation = auth()->user()->hasRole('super_admin');
+
     public static function getPermissionPrefixes(): array
     {
         return [
@@ -156,7 +158,13 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Utils::isResourceNavigationRegistered();
+        if (auth()->user()->hasRole('super_admin')){
+            return true;
+        }
+
+        return false;
+        
+        // return Utils::isResourceNavigationRegistered();
     }
 
     // public static function getNavigationGroup(): ?string

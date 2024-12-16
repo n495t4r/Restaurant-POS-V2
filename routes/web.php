@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Pages\StockHistories;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\StockManagementController;
@@ -35,7 +36,7 @@ Route::get('/', function () {
 
 Route::prefix('/peva')->middleware('auth')->group(function () {
     Route::get('print/{id}', [PrintController::class, 'printInvoice'])->name('print.invoice');
-
+    
     // Route::get('/stock', [StockManagementController::class, 'index'])->name('stock.index');
 
     // Route::view('/', 'welcome')->name('home');

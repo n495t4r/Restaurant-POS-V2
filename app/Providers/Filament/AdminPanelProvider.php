@@ -64,6 +64,7 @@ class AdminPanelProvider extends PanelProvider
                     ->users([
                         'Manager' => 'onah.ov@gmail.com',
                         'Cashier' => 'cashier@peva.com',
+                        'Cook' => 'queenlizonah@gmail.com',
                     ])
             ]);
     }

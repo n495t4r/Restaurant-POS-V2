@@ -48,8 +48,19 @@ trait HasCheckout
                         ->preload(),
                     Select::make('customer_id')
                         ->label('Customer')
-                        ->options($customers)
+                        ->options(function (Get $get) use ($customers) {
+                            if ($get('channel_id') == 6) {
+                                // Filter customers when channel_id is 6
+                                return array_filter($customers, function ($value, $key) {
+                                    return in_array($key, [15, 16, 17, 18, 20, 24]);
+                                }, ARRAY_FILTER_USE_BOTH);
+                            }
+                            return $customers;
+                        })
                         ->preload()
+                        ->required(function (Get $get): bool {
+                            return $get('channel_id') == 6;
+                        })
                         ->searchable(),
                     TextInput::make('paid_amount')
                         ->label(trans('Paid amount'))

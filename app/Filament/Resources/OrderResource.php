@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Imports\OrderImporter;
+use App\Filament\Pages\StockHistories;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Customer;
@@ -225,17 +226,7 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-
-        // $customers = Customer::pluck('first_name', 'id')->toArray(); //change to customer.name instead
-        // $customers = Customer::pluck('name', 'id')->toArray(); //change to customer.name instead
-        // $channels = OrderChannel::pluck('channel', 'id')->toArray(); //change to customer.name instead
-        // $payment_methods = PaymentMethod::pluck('name', 'id')->toArray(); //change to customer.name instead
-
-
         return $table
-            // ->groupsOnly()
-            // ->defaultGroup('created_at')
-
             ->paginated([10, 25, 50, 100, 200])
             ->groups([
                 'channel.channel',
@@ -297,7 +288,7 @@ class OrderResource extends Resource
                     ->searchable()
                     ->disabled(
                         fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') ||
-                            $record->channel_id == 6) && auth()->id() != 2
+                            $record->channel_id == 6 || StockHistories::isCashierUnitClosed()) && auth()->id() != 2
                     )
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->label('Customer name')
@@ -317,12 +308,16 @@ class OrderResource extends Resource
                     ->disableOptionWhen(function (string $value, string $label): bool {
                         $customer = Customer::find($value);
                         return $customer && !$customer->is_active;
+                    })->beforeStateUpdated(function ($record, $state) {
+                        if (StockHistories::isCashierUnitClosed()) {
+                            throw new \Exception('Cannot update order info when cashier unit is closed.');
+                        }
                     }),
                 Tables\Columns\SelectColumn::make('channel_id')
                     // ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable()
-                    ->disabled(fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') || $record->channel_id === 6) && auth()->id() != 2)
+                    ->disabled(fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') || $record->channel_id === 6 || StockHistories::isCashierUnitClosed()) && auth()->id() != 2)
                     ->label('Order channel')
                     ->options(function (): array {
                         return OrderChannel::query()
@@ -340,6 +335,10 @@ class OrderResource extends Resource
                     ->disableOptionWhen(function (string $value, string $label): bool {
                         $channel = OrderChannel::find($value);
                         return $channel && !$channel->is_active;
+                    })->beforeStateUpdated(function ($record, $state) {
+                        if (StockHistories::isCashierUnitClosed()) {
+                            throw new \Exception('Cannot update order info when cashier unit is closed.');
+                        }
                     }),
                 Tables\Columns\TextColumn::make('items_sum_price')
                     ->sum('items', 'price')
