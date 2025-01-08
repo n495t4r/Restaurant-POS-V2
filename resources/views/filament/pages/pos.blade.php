@@ -2,7 +2,7 @@
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
         <div class="md:col-span-1">
             <div class="mb-4">
-                Write something...
+                <!-- Write something... -->
             </div>
             {{ $this->table }}
         

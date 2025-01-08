@@ -40,6 +40,7 @@ trait HasCheckout
                 $channels = OrderChannel::where('is_active', true)->pluck('channel', 'id')->toArray(); //change to customer.name instead
                 $customers = Customer::where('is_active', true)->pluck('name', 'id')->toArray(); //change to customer.name instead
                 $payment_methods = PaymentMethod::where('is_active', true)->pluck('name', 'id')->toArray(); //change to customer.name instead
+                
                 return [
                     Select::make('channel_id')
                         ->label('Order Channel')
@@ -48,11 +49,13 @@ trait HasCheckout
                         ->preload(),
                     Select::make('customer_id')
                         ->label('Customer')
-                        ->options(function (Get $get) use ($customers) {
+                        ->options(function (Get $get, Set $set) use ($customers) {
                             if ($get('channel_id') == 6) {
+
+                                $set('customer_id', '');
                                 // Filter customers when channel_id is 6
                                 return array_filter($customers, function ($value, $key) {
-                                    return in_array($key, [15, 16, 17, 18, 20, 24]);
+                                    return in_array($key, [15, 16, 17, 18, 20, 24, 44]);
                                 }, ARRAY_FILTER_USE_BOTH);
                             }
                             return $customers;
@@ -103,8 +106,17 @@ trait HasCheckout
                         ->placeholder('Enter note for cook'),
                 ];
             })
-            ->action(function (array $data) {
+            ->action(function (array $data, array $arguments) {
                 if (!StockHistories::isCashierUnitClosed()) {
+
+                    if($data['channel_id'] == 6){
+                        
+                        $staffOrderAmount = Customer::getTotalOrderAmount($data['customer_id']);
+                        if($staffOrderAmount + $arguments['total'] > 2000){
+                            $this->notify('The staff Orders should not exceed N2000', 'warning');
+                            return;
+                        }
+                    }
                     // Begin a transaction
                     DB::beginTransaction();
                     try {
@@ -151,7 +163,7 @@ trait HasCheckout
                         })->toArray());
 
                         // Create the payment
-                        if ($data['paid_amount'] != null && $data['paid_amount'] > 0) {
+                        if (isset($data['paid_amount']) && $data['paid_amount'] != null && $data['paid_amount'] > 0) {
                             $payment_method_id = $data['payment_method_id'];
                             $payment = new Payment;
                             $payment->order_id = $order->id; // Set order_id from the created Order
@@ -171,11 +183,11 @@ trait HasCheckout
                         $this->notify('Order created successfully');
 
                         // Detailed logging
-                        \Log::info('Order Created - Event Dispatch', [
-                            'orderId' => $order->id,
-                            'method' => 'create',
-                            'timestamp' => now()
-                        ]);
+                        // \Log::info('Order Created - Event Dispatch', [
+                        //     'orderId' => $order->id,
+                        //     'method' => 'create',
+                        //     'timestamp' => now()
+                        // ]);
 
                         // Method 2: Broadcast event
                         event(new \App\Events\OrderCreated($order));

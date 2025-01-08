@@ -285,7 +285,6 @@ class OrderResource extends Resource
 
                 // ])->collapsible(),
                 Tables\Columns\SelectColumn::make('customer_id')
-                    ->searchable()
                     ->disabled(
                         fn($record) => ($record->created_at->format('Y-m-d') != today()->format('Y-m-d') ||
                             $record->channel_id == 6 || StockHistories::isCashierUnitClosed()) && auth()->id() != 2
@@ -334,7 +333,7 @@ class OrderResource extends Resource
                     })
                     ->disableOptionWhen(function (string $value, string $label): bool {
                         $channel = OrderChannel::find($value);
-                        return $channel && !$channel->is_active;
+                        return $channel && !$channel->is_active || $channel->id == 6;
                     })->beforeStateUpdated(function ($record, $state) {
                         if (StockHistories::isCashierUnitClosed()) {
                             throw new \Exception('Cannot update order info when cashier unit is closed.');
@@ -423,11 +422,9 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('commentForCook')
                     ->wrap()
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('reason')
                     ->label('Notes')
-                    ->searchable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('user.first_name')
