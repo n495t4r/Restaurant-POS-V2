@@ -10,6 +10,7 @@ use App\Models\OrderChannel;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action as ActionsAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,11 +36,14 @@ class Pos extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
     use InteractsWithTable;
-    use HasCheckout;
+    use HasCheckout, HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
+    protected static ?string $title = 'Cart';
+    protected static ?string $slug = 'cart';
+    
 
     protected static string $view = 'filament.pages.pos';
 
