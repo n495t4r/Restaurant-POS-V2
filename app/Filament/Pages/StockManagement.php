@@ -497,9 +497,10 @@ class StockManagement extends Page
                             ->visible(auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('Manager'))
                             // ->visible(fn() => auth()->id() == 2)
                             ->description('Oweing customers')
-                            ->columns(4)
+                            ->columns(2)
                             ->schema([
                                 TextEntry::make('List of customers')
+                                    ->listWithLineBreaks()
                                     ->default(4)
                                     ->badge()
                                     ->state(function () {
@@ -516,7 +517,8 @@ class StockManagement extends Page
                                                 $unpaid_amount = number_format(Order::unpaid_amount($customer), 2);
 
                                                 // Concatenate the product name and quantity
-                                                $unpaid_list[] = "$customerName" . " - " . "$unpaid_amount";
+                                                if(Order::unpaid_amount($customer) != 0)
+                                                    $unpaid_list[] = "$customerName" . " - " . "$unpaid_amount";
                                             } else {
                                                 $unpaid_amount = OrderItem::whereNotIn('order_id', Order::failed_order())
                                                     ->whereNotIn('order_id', Order::staff_order())
@@ -540,6 +542,19 @@ class StockManagement extends Page
                                                 $unpaid_list[] = "Others" . " - " . number_format($unpaid_amount - $partial, 2);
                                             }
                                         }
+
+                                        usort($unpaid_list, function($a, $b) {
+                                            // Extract the numeric values from the strings
+                                            preg_match('/- ([\d,]+\.\d{2})/', $a, $amountA);
+                                            preg_match('/- ([\d,]+\.\d{2})/', $b, $amountB);
+                                        
+                                            // Remove commas and compare as floats
+                                            $amountA = (float) str_replace(',', '', $amountA[1]);
+                                            $amountB = (float) str_replace(',', '', $amountB[1]);
+                                        
+                                            // Descending order
+                                            return $amountB <=> $amountA;
+                                        });
 
                                         return $unpaid_list;
                                     })
