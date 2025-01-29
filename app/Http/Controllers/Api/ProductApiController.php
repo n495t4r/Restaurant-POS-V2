@@ -21,7 +21,7 @@ class ProductApiController extends Controller
     {
         $perPage = $request->input('per_page', 15);
         $category = $request->input('product_category');
-        $status = $request->input('status');
+        $status = true;
         $search = $request->input('search');
 
         $cacheKey = "products:{$perPage}:{$category}:{$status}:{$search}:" . $request->page;
