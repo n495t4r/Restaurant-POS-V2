@@ -39,11 +39,11 @@ class ApiKeyResource extends Resource
                         ->required()
                         ->default(true)
                         ->columnSpan(1),
-                    Forms\Components\Select::make('user_id')
-                        ->relationship('user', 'first_name')
-                        ->required()
-                        ->searchable()
-                        ->columnSpan(2),
+                    // Forms\Components\Select::make('user_id')
+                    //     ->relationship('user', 'first_name')
+                    //     ->required()
+                    //     ->searchable()
+                    //     ->columnSpan(2),
                 ])
             ]);
     }
