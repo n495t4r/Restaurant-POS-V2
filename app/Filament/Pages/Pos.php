@@ -121,7 +121,13 @@ class Pos extends Page implements HasForms, HasTable
                     ->label('Add to Cart')
                     ->icon('heroicon-s-shopping-cart')
                     ->action(function (Product $record) {
-                        $this->addToCart($record);
+
+                        // if($record->quantity) {
+                            $this->addToCart($record);
+                        // }else{
+                        //     $this->notify($record->name.' is out of stock', 'warning');
+                        // }
+
                     }),
             ])
             ->bulkActions([])
@@ -130,6 +136,15 @@ class Pos extends Page implements HasForms, HasTable
 
     public function addToCart(Product $product)
     {
+        $cartqty = Cart::where('product_id', $product->id)
+            ->where('session_id', $this->sessionID)
+            ->pluck('qty')->first();
+
+        if ($product->quantity == 0 || ($cartqty +1) > $product->quantity) {
+            $this->notify($product->name.' is out of stock', 'warning');
+            return;
+        }
+
         $cart = Cart::firstOrCreate(
             [
                 'session_id' => $this->sessionID,
@@ -143,7 +158,7 @@ class Pos extends Page implements HasForms, HasTable
                 'total' => $product->price
             ]
         );
-
+        
         $cart->qty += 1;
         $cart->total = $cart->price * $cart->qty;
         $cart->save();
