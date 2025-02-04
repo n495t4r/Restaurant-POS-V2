@@ -23,6 +23,14 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static function is_admin():bool {
+        return auth()->user()->hasRole('super_admin');
+    }
+
+    protected static function is_manager():bool {
+        return auth()->user()->hasRole('Manager');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -33,11 +41,22 @@ class ProductResource extends Resource
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
                 Forms\Components\FileUpload::make('image')
-                    ->image(),
+                    ->image()
+                    ->disk('public') // Ensures it uses the 'public' disk
+                    ->directory('products') // Specifies the subfolder 'products'
+                    ->maxSize(1528) // Optional: You can set the maximum file size (e.g., 10MB)
+                    ,
                 Forms\Components\TextInput::make('price')
                     ->helperText('Selling price per unit/portion')
                     ->required()
                     ->numeric()
+                    ->disabled(
+                        function (){
+                            if (self::is_admin() || self::is_manager()){
+                                return false;
+                            }
+                            return true;
+                        })
                     ->minValue(0)
                     ->prefix('NGN'),
                 Forms\Components\Select::make('product_category_id')
@@ -45,12 +64,14 @@ class ProductResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('quantity')
                     ->label('Front quantity')
+                    ->visible(self::is_admin())
                     ->required()
                     ->default(0)
                     ->minValue(0)
                     ->numeric(),
                 Forms\Components\TextInput::make('store')
                     ->label('Store quantity')
+                    ->visible(self::is_admin())
                     ->default(0)
                     ->required()
                     ->minValue(0)
@@ -88,7 +109,7 @@ class ProductResource extends Resource
                     ->sortable()
                     ->tooltip('Cost per portion based on recipe')
                     ->getStateUsing(fn(Product $record) => $record->cost_per_portion)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('recommended_selling_price')
                     ->label('Recomm. Price')
                     ->money('NGN')
