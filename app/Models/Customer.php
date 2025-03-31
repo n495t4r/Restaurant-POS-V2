@@ -22,10 +22,13 @@ class Customer extends Model
         'user_id',
         'created_by',
         'is_active',
+        'is_staff'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_staff' => 'boolean',
+
     ];
 
     public function getAvatarUrl()
@@ -78,5 +81,10 @@ class Customer extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public static function getStaffIds(): array
+    {
+        return self::where('is_staff', true)->pluck('id')->toArray();
     }
 }

@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
@@ -25,34 +26,51 @@ class CustomerResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(20),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->maxLength(191)
-                    ->default(null),
-                Forms\Components\TextInput::make('phone')
-                    ->tel()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(15)
-                    ->required(),
-                Forms\Components\TextInput::make('address')
-                    ->maxLength(191)
-                    ->default(null),
-                Forms\Components\TextInput::make('avatar')
-                    ->maxLength(191)
-                    ->default(null),
-                Forms\Components\Toggle::make('is_active')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->default(true)
-                    ->required(),
-                // Forms\Components\TextInput::make('user_id')
-                //     ->required()
-                //     ->numeric(),
-            ]);
+            ->schema(static::getFormSchema());
+    }
+
+    static function getFormSchema(): array
+    {
+        return [
+
+            // Forms\Components\Select::make('assigned_user_id')
+            //     ->relationship('user', 'first_name')
+            //     ->required(),
+            Forms\Components\TextInput::make('name')
+                ->maxLength(191),
+            Forms\Components\TextInput::make('email')
+                ->email()
+                ->maxLength(191)
+                ->default(null),
+            Forms\Components\TextInput::make('phone')
+                ->tel()
+                ->unique(ignoreRecord: true)
+                ->maxLength(15)
+                ->required(!auth()->user()->hasRole('super_admin')),
+            Forms\Components\TextInput::make('address')
+                ->maxLength(191)
+                ->default(null),
+            Forms\Components\TextInput::make('avatar')
+                ->maxLength(191)
+                ->default(null),
+            // Forms\Components\Select::make('user_id')
+            //     ->relationship('creator', 'first_name')
+            //     ->visible(auth()->user()->hasRole('super_admin'))
+            //     ->required(),
+            Forms\Components\Toggle::make('is_active')
+                ->onColor('success')
+                ->offColor('danger')
+                ->default(true)
+                ->visible(auth()->user()->hasRole('super_admin'))
+                ->required(),
+            Forms\Components\Toggle::make('is_staff')
+                ->onColor('success')
+                ->offColor('danger')
+                ->default(false)
+                ->visible(auth()->user()->hasRole('super_admin'))
+                ->required(),
+            
+        ];
     }
 
     public static function table(Table $table): Table
@@ -62,8 +80,11 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('Customer ID')->searchable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Customer')
+                    ->label('Customer name')
                     ->searchable(),
+                // Tables\Columns\TextColumn::make('user.first_name')
+                //     ->label('User name')
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
@@ -94,6 +115,7 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -107,6 +129,20 @@ class CustomerResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function canView(Model $record): bool
+    {
+        $user = auth()->user();
+        // Allow viewing if it's the user's own record
+        return $user->id == $record->user_id;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+        // Hide from navigation if user can't view list
+        return $user->can('view_customer');
     }
 
     public static function getPages(): array
