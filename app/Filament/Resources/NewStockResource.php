@@ -64,12 +64,13 @@ class NewStockResource extends Resource
 
                         if ($cookRole){
                             unset($locations[1]); // Remove Store option
-                            // unset($locations[2]); // Remove Market option
+                            unset($locations[2]); // Remove Market option
                         }
 
                         if ($cashierRole){
                             unset($locations[0]); // Remove from Shop front option
                             unset($locations[3]); // Remove from Kitchen option
+                            unset($locations[2]); // Remove from Market
                         }
 
                         return collect($locations)
